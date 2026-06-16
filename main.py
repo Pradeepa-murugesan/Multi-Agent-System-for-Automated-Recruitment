@@ -40,8 +40,7 @@ def generate_jd():
 @app.route('/process', methods=['POST'])
 def process():
     """
-    This endpoint reliably processes all resumes and returns the results
-    in a single, clean batch.
+    Processes resumes and interrupts before sending emails to allow for review.
     """
     job_description_text = request.form.get('job_description_text')
     resume_files = request.files.getlist('resumes')
@@ -56,24 +55,108 @@ def process():
         if not resume_file.filename:
             continue
 
-        resume_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{uuid.uuid4()}_{resume_file.filename}")
+        thread_id = str(uuid.uuid4())
+        resume_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{thread_id}_{resume_file.filename}")
         resume_file.save(resume_path)
         resume_text = parse_pdf_from_path(resume_path)
         
         initial_state = {
             "job_description": job_description_text,
-            "resume_content": resume_text
+            "resume_content": resume_text,
+            "refinement_instructions": ""
         }
-        final_state = recruitment_app.invoke(initial_state)
-
+        
+        config = {"configurable": {"thread_id": thread_id}}
+        
+        # This will run until the interrupt_before=['email_sender']
+        recruitment_app.invoke(initial_state, config=config)
+        
+        # Get the state after interrupt
+        state_snapshot = recruitment_app.get_state(config)
+        
         result_for_frontend = {
             "filename": resume_file.filename,
-            "state": final_state
+            "thread_id": thread_id,
+            "state": state_snapshot.values,
+            "next_step": list(state_snapshot.next)
         }
         all_results.append(result_for_frontend)
         os.remove(resume_path)
 
     return jsonify(all_results)
+
+@app.route('/refine_email', methods=['POST'])
+def refine_email():
+    data = request.get_json()
+    thread_id = data.get('thread_id')
+    instructions = data.get('instructions')
+    
+    if not thread_id or not instructions:
+        return jsonify({"error": "Missing thread_id or instructions."}), 400
+        
+    config = {"configurable": {"thread_id": thread_id}}
+    
+    try:
+        print(f"---REFINEMENT START: {thread_id}---")
+        print(f"Instructions: {instructions}")
+
+        # 1. Update state with instructions
+        recruitment_app.update_state(config, {"refinement_instructions": instructions})
+        
+        # 2. Get current state
+        state = recruitment_app.get_state(config).values
+        print(f"Pre-refinement draft: {state.get('drafted_email', {}).get('subject')}")
+
+        # 3. Re-run the relevant drafter node
+        match_score = state.get("screening_results", {}).get("matchScore", 0)
+        if match_score >= 70:
+            from src.agents.candidate_communication_agent import draft_email_node
+            new_state_part = draft_email_node(state)
+        else:
+            from src.agents.rejection_email_agent import draft_rejection_node
+            new_state_part = draft_rejection_node(state)
+            
+        print(f"Post-refinement draft: {new_state_part.get('drafted_email', {}).get('subject')}")
+
+        # 4. Update the state with the new draft
+        recruitment_app.update_state(config, new_state_part)
+        
+        # 5. Clear instructions
+        recruitment_app.update_state(config, {"refinement_instructions": ""})
+        
+        print(f"---REFINEMENT COMPLETE: {thread_id}---")
+
+        return jsonify({
+            "status": "refined",
+            "new_state": recruitment_app.get_state(config).values
+        })
+    except Exception as e:
+        print(f"Error during refinement: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/send_email', methods=['POST'])
+def send_email():
+    data = request.get_json()
+    thread_id = data.get('thread_id')
+    
+    if not thread_id:
+        return jsonify({"error": "Missing thread_id."}), 400
+        
+    config = {"configurable": {"thread_id": thread_id}}
+    
+    try:
+        # Resume the graph (it will run the interrupted node 'email_sender')
+        recruitment_app.invoke(None, config=config)
+        
+        final_state = recruitment_app.get_state(config).values
+        
+        return jsonify({
+            "status": "sent",
+            "final_status": final_state.get("final_status", "Sent")
+        })
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(port=5001, debug=True)

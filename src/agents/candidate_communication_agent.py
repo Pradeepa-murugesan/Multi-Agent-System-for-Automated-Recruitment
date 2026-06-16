@@ -15,37 +15,60 @@ def draft_email_node(state):
     candidate_name = screening_results.get("candidateName", "Candidate")
     summary = screening_results.get("summary", "No summary available.")
 
+    instructions = state.get("refinement_instructions", "")
+    current_draft = state.get("drafted_email", {})
+
     llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.7)
 
-    
     prompt_template = """
-    You are a senior recruitment coordinator. Your task is to generate the content for a professional interview invitation email.
+    You are a senior recruitment coordinator. Your task is to {action_type} a professional interview invitation email.
 
-    **CRITICAL INSTRUCTIONS:**
-    1.  First, analyze the provided Job Description to identify the official **Job Title** and **Company Name**.
-    2.  You MUST return a single, valid JSON object. Do not add any text before or after the JSON.
-    3.  The JSON object must have exactly two keys: "subject" and "body".
-    4.  **"subject" key:** The value must be a professional subject line in the format: "Invitation to Interview for [Extracted Job Title] at [Extracted Company Name]".
-    5.  **"body" key:** The value must be the full, professionally formatted HTML body of the email. It should welcome the candidate, reference their impressive background from the summary, clearly state the invitation for a 30-45 minute interview, ask for their availability, and sign off with "The [Extracted Company Name] Hiring Team".
+    {refinement_context}
 
-    **Candidate's AI Summary:**
-    "{summary}"
+    **CORE OBJECTIVE:**
+    Generate a high-quality, professional email invitation. 
+    1. Identify the **Job Title** and **Company Name** from the JD.
+    2. Reference the candidate's background: "{summary}"
+    3. State clearly that this is an invitation for a 30-45 minute interview.
+    4. Sign off as "The [Extracted Company Name] Hiring Team".
 
-    **Full Job Description:**
-    ---
+    **CRITICAL OUTPUT FORMAT:**
+    - Return ONLY a valid JSON object.
+    - Keys: "subject" and "body".
+    - "body" should be professionally formatted HTML.
+
+    **Job Description context:**
     {job_description}
-    ---
 
     **JSON Output:**
+    """
+
+    action_type = "generate"
+    refinement_context = ""
+    if instructions:
+        action_type = "refine and update"
+        refinement_context = f"""
+    ### IMPORTANT: REFINEMENT Feedback ###
+    The user is NOT happy with the previous draft and wants the following changes:
+    "{instructions}"
+
+    PROCEED BY:
+    - Reviewing the previous draft:
+      - Subject: {current_draft.get('subject')}
+      - Body: {current_draft.get('body', '').replace('{', '{{').replace('}', '}}')}
+    - Applying the requested changes while maintaining a professional tone.
+    - Your new version MUST incorporate the feedback above.
     """
 
     prompt = ChatPromptTemplate.from_template(prompt_template)
     chain = prompt | llm
 
     response = chain.invoke({
+        "action_type": action_type,
         "candidate_name": candidate_name,
         "summary": summary,
-        "job_description": job_description
+        "job_description": job_description,
+        "refinement_context": refinement_context
     })
 
     email_data = clean_and_parse_json(response.content)

@@ -14,6 +14,7 @@ class AgentState(TypedDict):
     screening_results: dict
     drafted_email: Dict[str, str] 
     final_status: str
+    refinement_instructions: str
     messages: Annotated[List[str], operator.add]
 
 workflow = StateGraph(AgentState)
@@ -63,5 +64,8 @@ workflow.add_edge('invitation_drafter', 'email_sender')
 workflow.add_edge('rejection_drafter', 'email_sender')
 
 workflow.add_edge('email_sender', END)
-app = workflow.compile()
+from langgraph.checkpoint.memory import MemorySaver
+
+memory = MemorySaver()
+app = workflow.compile(checkpointer=memory, interrupt_before=["email_sender"])
 

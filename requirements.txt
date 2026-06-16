@@ -1,287 +1,94 @@
-langchain==0.2.0
-langgraph==0.0.60
+# ─────────────────────────────────────────────────────────────
+# Multi-Agent System for Automated Recruitment
+# Requirements — Python 3.11
+# Install with: pip install -r requirements.txt
+# ─────────────────────────────────────────────────────────────
 
-python-dotenv==1.0.1
+# ── Web Framework ─────────────────────────────────────────────
+flask
+werkzeug
+blinker
+click
+itsdangerous
+jinja2
+MarkupSafe
 
-This is a errror 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Recruitment Assistant</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #111827; /* Dark background */
-        }
-        /* Custom gradient for buttons and highlights */
-        .gradient-text {
-            background: linear-gradient(to right, #818cf8, #6366f1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .gradient-bg {
-            background: linear-gradient(to right, #4f46e5, #6366f1);
-        }
-        .gradient-border-good {
-            border-image-source: linear-gradient(to bottom right, #4f46e5, #a78bfa);
-            border-image-slice: 1;
-        }
-        .gradient-border-bad {
-            border-image-source: linear-gradient(to bottom right, #f59e0b, #fbbf24);
-            border-image-slice: 1;
-        }
-        /* Custom spinner */
-        .loader {
-            height: 48px;
-            width: 48px;
-            border-radius: 50%;
-            border: 4px solid #4f46e5;
-            border-top-color: #1f2937;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .notification {
-            position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem; border-radius: 0.5rem; color: white; font-weight: bold; z-index: 100; opacity: 0; transform: translateY(-20px); transition: all 0.3s ease-in-out;
-        }
-        .notification.show { opacity: 1; transform: translateY(0); }
-    </style>
-</head>
-<body class="text-gray-300">
+# ── Environment ───────────────────────────────────────────────
+python-dotenv
 
-    <div id="notification-area"></div>
+# ── LangChain Stack (pinned to compatible set) ────────────────
+# Note: langchain-core 0.3.x is used with langchain-groq 0.3.x
+# langchain is kept for langgraph 0.0.60 compatibility;
+# installed with --no-deps to avoid resolver conflict.
+langchain-core
+langchain-groq
+langchain-text-splitters
+langsmith
 
-    <div class="container mx-auto max-w-4xl px-4 py-16">
-        <header class="text-center mb-12">
-            <div class="flex items-center justify-center gap-4 mb-4">
-                <svg class="w-12 h-12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 7C13.66 7 15 8.34 15 10C15 11.66 13.66 13 12 13C10.34 13 9 11.66 9 10C9 8.34 10.34 7 12 7ZM12 20C9.33 20 5.42 18.66 5.42 16.5C5.42 14.34 9.33 13 12 13C14.67 13 18.58 14.34 18.58 16.5C18.58 18.66 14.67 20 12 20Z" fill="url(#grad1)"/>
-                    <defs><linearGradient id="grad1" x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse"><stop stop-color="#818cf8"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs>
-                </svg>
-                <h1 class="text-5xl font-extrabold text-white">AI Recruitment <span class="gradient-text">Assistant</span></h1>
-            </div>
-            <p class="mt-2 text-lg text-gray-400">Supercharge your hiring workflow with the power of generative AI.</p>
-        </header>
+# ── LangGraph ─────────────────────────────────────────────────
+langgraph
 
-        <form id="upload-form" class="bg-gray-800/50 backdrop-blur-sm p-8 rounded-2xl border border-gray-700 space-y-8">
-            <div>
-                <h2 class="text-2xl font-bold mb-4 text-white">Step 1: Provide Job Description</h2>
-                <div class="relative">
-                    <textarea id="job_description_text" name="job_description_text" rows="10" class="w-full p-4 bg-gray-900 border border-gray-700 rounded-lg text-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition placeholder-gray-500" placeholder="Enter notes like 'Python dev, 5 years, aws, flask' and click Generate... or paste a full JD."></textarea>
-                    <button type="button" id="generate-jd-btn" class="absolute bottom-4 right-4 gradient-bg text-white font-semibold py-2 px-4 rounded-lg hover:shadow-lg hover:shadow-indigo-500/30 transition-all transform hover:scale-105">
-                        ✨ Generate with AI
-                    </button>
-                </div>
-            </div>
-            <div>
-                <h2 class="text-2xl font-bold mb-4 text-white">Step 2: Upload Candidate Resumes</h2>
-                <label for="resumes" class="cursor-pointer border-2 border-dashed border-gray-600 hover:border-indigo-500 bg-gray-900/50 rounded-lg p-8 flex flex-col items-center justify-center text-center transition">
-                    <svg class="w-12 h-12 text-gray-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                    <span class="text-gray-400">Click to upload Resumes (Multiple PDFs)</span>
-                    <span id="resume-filenames" class="text-sm font-medium text-indigo-400 mt-1"></span>
-                </label>
-                <input type="file" id="resumes" name="resumes" class="hidden" accept=".pdf" multiple required>
-            </div>
-            <div class="text-center">
-                <button type="submit" class="w-full gradient-bg text-white font-bold py-3 px-6 rounded-lg text-lg hover:shadow-xl hover:shadow-indigo-500/30 focus:outline-none focus:ring-4 focus:ring-indigo-500/50 transition-transform transform hover:scale-105">
-                    Process Candidates
-                </button>
-            </div>
-        </form>
+# ── Groq / OpenAI SDKs ────────────────────────────────────────
+groq
+openai
+langchain-openai
 
-        <div id="results-container" class="mt-12 space-y-6">
-            <div id="loader" class="hidden flex flex-col items-center justify-center text-center py-8">
-                <div class="loader"></div>
-                <p class="mt-4 text-lg font-medium text-gray-400">AI agents at work... Please wait.</p>
-            </div>
-        </div>
-    </div>
+# ── PDF Parsing ───────────────────────────────────────────────
+pymupdf
 
-    <script>
-        const form = document.getElementById('upload-form');
-        const resumesInput = document.getElementById('resumes');
-        const resumeFilenamesSpan = document.getElementById('resume-filenames');
-        const resultsContainer = document.getElementById('results-container');
-        const loader = document.getElementById('loader');
-        const generateJdBtn = document.getElementById('generate-jd-btn');
-        const jdTextarea = document.getElementById('job_description_text');
-        const notificationArea = document.getElementById('notification-area');
+# ── HTTP & Async ──────────────────────────────────────────────
+httpx
+httpcore
+h11
+anyio
+sniffio
+aiohttp
+aiosignal
+aiohappyeyeballs
+frozenlist
+multidict
+yarl
+propcache
 
-        function showNotification(message, isError = false) {
-            const notif = document.createElement('div');
-            notif.className = `notification ${isError ? 'bg-red-600' : 'bg-indigo-600'}`;
-            notif.textContent = message;
-            notificationArea.appendChild(notif);
-            setTimeout(() => notif.classList.add('show'), 10);
-            setTimeout(() => {
-                notif.classList.remove('show');
-                setTimeout(() => notif.remove(), 300);
-            }, 3000);
-        }
+# ── Data Validation ───────────────────────────────────────────
+pydantic
+pydantic-core
+annotated-types
+typing-extensions
+typing-inspect
+typing-inspection
+mypy-extensions
 
-        resumesInput.addEventListener('change', () => { resumeFilenamesSpan.textContent = resumesInput.files.length > 0 ? `${resumesInput.files.length} resume(s) selected` : ''; });
+# ── Serialization ─────────────────────────────────────────────
+dataclasses-json
+marshmallow
+orjson
+PyYAML
+jsonpatch
+jsonpointer
 
-        generateJdBtn.addEventListener('click', async () => {
-            const notes = jdTextarea.value;
-            if (!notes.trim()) {
-                showNotification('Please enter some notes to generate a description.', true);
-                return;
-            }
-            generateJdBtn.textContent = 'Generating...';
-            generateJdBtn.disabled = true;
-            try {
-                const response = await fetch('/generate_jd', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ notes: notes })
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    jdTextarea.value = data.job_description;
-                } else {
-                    showNotification(data.error || 'An unknown error occurred.', true);
-                }
-            } catch (error) {
-                console.error("JD Generation Error:", error);
-                showNotification("Failed to connect to the server for JD generation.", true);
-            } finally {
-                generateJdBtn.textContent = '✨ Generate with AI';
-                generateJdBtn.disabled = false;
-            }
-        });
+# ── Networking ────────────────────────────────────────────────
+requests
+requests-toolbelt
+urllib3
+certifi
+charset-normalizer
+idna
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            loader.classList.remove('hidden');
-            resultsContainer.innerHTML = '';
-            resultsContainer.appendChild(loader);
-            const formData = new FormData(form);
-            try {
-                const response = await fetch('/process', { method: 'POST', body: formData });
-                // We will check for the content type to see if we got JSON
-                const contentType = response.headers.get("content-type");
-                if (contentType && contentType.indexOf("application/json") !== -1) {
-                    const results = await response.json();
-                    displayResults(results);
-                } else {
-                    const text = await response.text();
-                    throw new Error(`Server returned non-JSON response: ${text}`);
-                }
-            } catch (error) {
-                console.error('Processing error:', error);
-                displayError('An error occurred during processing. Please check the browser console and terminal for details.');
-            } finally {
-                loader.classList.add('hidden');
-            }
-        });
+# ── Database (LangChain dependency) ───────────────────────────
+sqlalchemy
+greenlet
 
-        function displayResults(results) {
-            resultsContainer.innerHTML = '';
-            if (!results || results.length === 0) {
-                resultsContainer.innerHTML = '<p class="text-center text-gray-400">No results to display.</p>';
-                return;
-            }
-            results.forEach(result => {
-                const card = createResultCard(result);
-                if (card) resultsContainer.appendChild(card);
-            });
-        }
+# ── Tokenisation ──────────────────────────────────────────────
+tiktoken
+regex
 
-        function displayError(message) {
-            resultsContainer.innerHTML = `<div class="bg-red-900/50 border border-red-700 text-red-300 p-4 rounded-lg" role="alert"><p class="font-bold">Error</p><p>${message}</p></div>`;
-        }
-        
-        // --- FINAL, ROBUST VERSION OF createResultCard ---
-        function createResultCard(result) {
-            if (!result?.state?.screening_results) {
-                console.error("Invalid result object from backend:", result);
-                return null;
-            }
-            const { filename, state } = result;
-            const { screening_results = {}, drafted_email, final_status } = state;
-            
-            const candidateName = screening_results.candidateName || "N/A";
-            const candidateEmail = screening_results.candidateEmail || "N/A";
-            const matchScore = screening_results.matchScore || 0;
-            const summary = screening_results.summary || "No summary available.";
-            
-            const card = document.createElement('div');
-            card.className = 'bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl border';
-            const isGoodMatch = matchScore >= 70;
-            const borderColorClass = isGoodMatch ? 'gradient-border-good border-2' : 'gradient-border-bad border-2';
-            card.classList.add(borderColorClass);
-            
-            let statusMessage = '';
-            if (final_status) {
-                statusMessage = final_status;
-            } else if (drafted_email?.body) {
-                statusMessage = 'Email sent successfully.';
-            } else if (isGoodMatch && (candidateEmail === 'N/A' || !candidateEmail)) {
-                statusMessage = 'Candidate is a good match, but no email address was found in the resume.';
-            } else {
-                statusMessage = 'Candidate did not meet the minimum score for an invitation.';
-            }
-
-            const draftedEmailBody = drafted_email?.body || '';
-
-            let emailSection = `<div class="mt-4 pt-4 border-t border-gray-700"><p class="text-sm font-medium text-gray-400">Status: <span class="font-semibold ${isGoodMatch ? 'text-indigo-400' : 'text-amber-400'}">${statusMessage}</span></p></div>`;
-            if (draftedEmailBody) {
-                 emailSection += `<div class="mt-4 p-4 bg-gray-900 rounded-lg text-sm text-gray-300 whitespace-pre-wrap border border-gray-700"><strong>Sent Email:</strong><br><br>${draftedEmailBody.replace(/\n/g, '<br>')}</div>`;
-            }
-
-            card.innerHTML = `
-                <div class="flex justify-between items-start gap-4">
-                    <div>
-                        <h3 class="text-xl font-bold text-white">${candidateName}</h3>
-                        <p class="text-sm text-gray-400">${candidateEmail} (${filename})</p>
-                    </div>
-                    <div class="text-right flex-shrink-0">
-                        <p class="text-sm text-gray-400">Match Score</p>
-                        <p class="text-3xl font-bold ${isGoodMatch ? 'text-indigo-400' : 'text-amber-400'}">${matchScore}%</p>
-                    </div>
-                </div>
-                <div class="mt-4">
-                    <div class="w-full bg-gray-700 rounded-full h-2.5">
-                        <div class="h-2.5 rounded-full ${isGoodMatch ? 'gradient-bg' : 'bg-amber-500'}" style="width: ${matchScore}%"></div>
-                    </div>
-                </div>
-                <div class="mt-5">
-                    <h4 class="font-semibold text-gray-200">AI Summary:</h4>
-                    <p class="mt-1 text-sm text-gray-400">${summary}</p>
-                </div>
-                ${emailSection}
-            `;
-            return card;
-        }
-    </script>
-</body>
-</html>
-
-
-can you verify the index.html
-from langgraph.pregel import Channel, Pregel
- * Debugger is active!
- * Debugger PIN: 825-336-700
-127.0.0.1 - - [22/Sep/2025 16:48:53] "GET / HTTP/1.1" 200 -
----AGENT: GENERATING JOB DESCRIPTION FROM NOTES---
-127.0.0.1 - - [22/Sep/2025 16:49:02] "POST /generate_jd HTTP/1.1" 200 -
----NODE: SCREENING RESUME (ENHANCED MODE)---
----AI failed to find email. Trying Regex fallback.---
----Regex found an email: pradeepamurugesan477@gmail.com---
----DECISION: Match Score is 92% for pradeepamurugesan477@gmail.com---
----DECISION: Score is sufficient. Proceeding to draft email.---
----NODE: DRAFTING STRUCTURED CANDIDATE EMAIL---
----NODE: SENDING FINAL STRUCTURED EMAIL---
-Email sent successfully to pradeepamurugesan477@gmail.com
----STATUS: Success: Email sent to None at pradeepamurugesan477@gmail.com.---
-127.0.0.1 - - [22/Sep/2025 16:49:12] "POST /process HTTP/1.1" 200 -
-
-output from the terminal
+# ── Utilities ─────────────────────────────────────────────────
+colorama
+numpy
+tenacity
+tqdm
+packaging
+distro
+jiter
+zstandard

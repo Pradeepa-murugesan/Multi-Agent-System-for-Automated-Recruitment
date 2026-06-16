@@ -1,219 +1,1124 @@
-
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Recruitment Assistant</title>
+    <title>AI Recruitment Assistant — Automated Hiring Workspace</title>
+    <meta name="description" content="AI-powered recruitment assistant that screens resumes, scores candidates, and automates hiring emails using multi-agent AI.">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #111827; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1f2937; }
-        ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 4px; }
-        .gradient-text { background: linear-gradient(to right, #818cf8, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .gradient-bg { background: linear-gradient(to right, #4f46e5, #6366f1); }
-        .gradient-border-good { border-image-source: linear-gradient(to bottom right, #4f46e5, #a78bfa); border-image-slice: 1; }
-        .gradient-border-bad { border-image-source: linear-gradient(to bottom right, #f59e0b, #fbbf24); border-image-slice: 1; }
-        .loader { height: 48px; width: 48px; border-radius: 50%; border: 4px solid #4f46e5; border-top-color: #1f2937; animation: spin 1s linear infinite; }
+        /* ─── Base & Fonts ─────────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #07080f;
+            color: #cbd5e1;
+            overflow: hidden;
+        }
+
+        /* ─── Scrollbar ─────────────────────────────────────── */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #3730a3; border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6366f1; }
+
+        /* ─── Background Mesh ───────────────────────────────── */
+        .bg-mesh {
+            position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+        }
+        .orb {
+            position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.18;
+            animation: float 12s ease-in-out infinite;
+        }
+        .orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, #4f46e5, #7c3aed); top: -200px; left: -100px; animation-delay: 0s; }
+        .orb-2 { width: 500px; height: 500px; background: radial-gradient(circle, #6366f1, #a855f7); bottom: -150px; right: -100px; animation-delay: -4s; }
+        .orb-3 { width: 350px; height: 350px; background: radial-gradient(circle, #3b82f6, #6366f1); top: 40%; left: 45%; animation-delay: -8s; opacity: 0.10; }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.05); }
+            66% { transform: translate(-20px, 20px) scale(0.97); }
+        }
+
+        /* ─── Layout ────────────────────────────────────────── */
+        .app-shell {
+            position: relative; z-index: 1;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            grid-template-columns: 480px 1fr;
+            height: 100vh;
+        }
+        .app-header {
+            grid-column: 1 / -1;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 28px;
+            height: 64px;
+            border-bottom: 1px solid rgba(99,102,241,0.15);
+            background: rgba(7,8,15,0.85);
+            backdrop-filter: blur(20px);
+        }
+        .panel-left {
+            border-right: 1px solid rgba(99,102,241,0.12);
+            overflow-y: auto;
+            display: flex; flex-direction: column;
+            background: rgba(10,11,20,0.6);
+            backdrop-filter: blur(10px);
+        }
+        .panel-right {
+            overflow-y: auto;
+            background: rgba(7,8,15,0.4);
+        }
+
+        /* ─── Glass Card ────────────────────────────────────── */
+        .glass {
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 16px;
+        }
+        .glass-deep {
+            background: rgba(15,16,28,0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(99,102,241,0.15);
+            border-radius: 16px;
+        }
+
+        /* ─── Gradient Utilities ────────────────────────────── */
+        .grad-text {
+            background: linear-gradient(135deg, #a5b4fc 0%, #818cf8 50%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .grad-btn {
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #7c3aed 100%);
+            transition: all 0.25s ease;
+            position: relative; overflow: hidden;
+        }
+        .grad-btn::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, #6366f1 0%, #818cf8 50%, #a855f7 100%);
+            opacity: 0; transition: opacity 0.25s ease;
+        }
+        .grad-btn:hover::after { opacity: 1; }
+        .grad-btn span, .grad-btn svg { position: relative; z-index: 1; }
+
+        /* ─── Step Badge ────────────────────────────────────── */
+        .step-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; border-radius: 50%;
+            font-size: 12px; font-weight: 700; flex-shrink: 0;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white; box-shadow: 0 0 12px rgba(99,102,241,0.5);
+        }
+
+        /* ─── Textarea ──────────────────────────────────────── */
+        .jd-textarea {
+            width: 100%; resize: none;
+            background: rgba(15,16,28,0.8);
+            border: 1px solid rgba(99,102,241,0.2);
+            border-radius: 12px;
+            padding: 16px;
+            color: #e2e8f0;
+            font-size: 14px; line-height: 1.7;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            outline: none;
+        }
+        .jd-textarea::placeholder { color: #475569; }
+        .jd-textarea:focus {
+            border-color: rgba(99,102,241,0.6);
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.12), 0 0 20px rgba(99,102,241,0.08);
+        }
+
+        /* ─── AI Generate Button ────────────────────────────── */
+        .ai-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 13px; font-weight: 600;
+            padding: 8px 14px; border-radius: 8px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white; border: none; cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 16px rgba(99,102,241,0.3);
+        }
+        .ai-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.45); }
+        .ai-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .ai-btn .spinner {
+            width: 14px; height: 14px; border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            animation: spin 0.7s linear infinite;
+        }
+
+        /* ─── Upload Zone ───────────────────────────────────── */
+        .upload-zone {
+            border: 2px dashed rgba(99,102,241,0.25);
+            border-radius: 14px;
+            background: rgba(15,16,28,0.5);
+            transition: all 0.25s ease;
+            cursor: pointer; position: relative;
+        }
+        .upload-zone:hover, .upload-zone.drag-over {
+            border-color: rgba(99,102,241,0.7);
+            background: rgba(99,102,241,0.06);
+            box-shadow: 0 0 24px rgba(99,102,241,0.12);
+        }
+        .upload-zone.has-files {
+            border-color: rgba(99,102,241,0.5);
+            background: rgba(99,102,241,0.05);
+        }
+
+        /* ─── File Chips ────────────────────────────────────── */
+        .file-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(99,102,241,0.15);
+            border: 1px solid rgba(99,102,241,0.25);
+            border-radius: 99px; padding: 4px 10px;
+            font-size: 12px; color: #a5b4fc;
+            max-width: 180px;
+        }
+        .file-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* ─── Submit Button ─────────────────────────────────── */
+        .submit-btn {
+            width: 100%; padding: 14px 24px;
+            border-radius: 12px; border: none; cursor: pointer;
+            font-size: 16px; font-weight: 700; color: white;
+            letter-spacing: 0.01em;
+            background: linear-gradient(135deg, #4338ca 0%, #6366f1 50%, #7c3aed 100%);
+            box-shadow: 0 4px 20px rgba(99,102,241,0.35), 0 1px 0 rgba(255,255,255,0.08) inset;
+            transition: all 0.25s ease;
+            position: relative; overflow: hidden;
+        }
+        .submit-btn::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, #6366f1 0%, #818cf8 50%, #a78bfa 100%);
+            opacity: 0; transition: opacity 0.25s ease;
+        }
+        .submit-btn:hover::before { opacity: 1; }
+        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(99,102,241,0.5); }
+        .submit-btn:active { transform: translateY(0); }
+        .submit-btn span { position: relative; z-index: 1; }
+
+        /* ─── Loader ────────────────────────────────────────── */
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .notification { position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem; border-radius: 0.5rem; color: white; font-weight: bold; z-index: 100; opacity: 0; transform: translateY(-20px); transition: all 0.3s ease-in-out; }
-        .notification.show { opacity: 1; transform: translateY(0); }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 0.4; }
+            100% { transform: scale(0.9); opacity: 0.8; }
+        }
+        .loader-ring {
+            width: 64px; height: 64px; border-radius: 50%;
+            border: 3px solid rgba(99,102,241,0.15);
+            border-top-color: #6366f1;
+            animation: spin 0.9s linear infinite;
+            position: relative;
+        }
+        .loader-ring::after {
+            content: ''; position: absolute; inset: 6px;
+            border-radius: 50%; border: 3px solid rgba(167,139,250,0.15);
+            border-bottom-color: #a78bfa;
+            animation: spin 1.4s linear infinite reverse;
+        }
+        .pipeline-step {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 16px; border-radius: 10px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            font-size: 13px; color: #64748b;
+            transition: all 0.4s ease;
+        }
+        .pipeline-step.active {
+            color: #a5b4fc;
+            background: rgba(99,102,241,0.08);
+            border-color: rgba(99,102,241,0.25);
+        }
+        .pipeline-step.done {
+            color: #6ee7b7; background: rgba(52,211,153,0.06); border-color: rgba(52,211,153,0.2);
+        }
+        .step-dot {
+            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+            background: currentColor;
+        }
+        .pipeline-step.active .step-dot { animation: pulse-ring 1.5s ease-in-out infinite; }
+
+        /* ─── Result Card ───────────────────────────────────── */
+        .result-card {
+            border-radius: 18px; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.07);
+            background: rgba(15,16,28,0.7);
+            backdrop-filter: blur(16px);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            animation: cardIn 0.4s ease both;
+        }
+        .result-card:hover { transform: translateY(-2px); }
+        .result-card.good { border-color: rgba(99,102,241,0.35); box-shadow: 0 0 24px rgba(99,102,241,0.1); }
+        .result-card.good:hover { box-shadow: 0 8px 32px rgba(99,102,241,0.2); }
+        .result-card.poor { border-color: rgba(245,158,11,0.3); box-shadow: 0 0 20px rgba(245,158,11,0.07); }
+        .result-card.poor:hover { box-shadow: 0 8px 32px rgba(245,158,11,0.15); }
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-header-good { background: linear-gradient(135deg, rgba(79,70,229,0.15), rgba(124,58,237,0.08)); }
+        .card-header-poor { background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(251,191,36,0.05)); }
+
+        /* ─── Score Arc ─────────────────────────────────────── */
+        .score-arc { transform: rotate(-90deg); }
+        .score-track { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 6; }
+        .score-fill { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1); }
+        .score-fill.good-fill { stroke: url(#scoreGradGood); }
+        .score-fill.poor-fill { stroke: url(#scoreGradPoor); }
+
+        /* ─── Score Bar ─────────────────────────────────────── */
+        .score-bar-track {
+            width: 100%; height: 6px; border-radius: 99px;
+            background: rgba(255,255,255,0.07); overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%; border-radius: 99px;
+            transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+        }
+        .score-bar-fill.good { background: linear-gradient(90deg, #4f46e5, #a78bfa); }
+        .score-bar-fill.poor { background: linear-gradient(90deg, #d97706, #fbbf24); }
+
+        /* ─── Badge ─────────────────────────────────────────── */
+        .badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 600;
+        }
+        .badge-good { background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.25); }
+        .badge-poor { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.25); }
+        .badge-sent { background: rgba(52,211,153,0.12); color: #6ee7b7; border: 1px solid rgba(52,211,153,0.25); }
+        .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+        /* ─── Email Toggle ───────────────────────────────────── */
+        .email-toggle-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 8px;
+            background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2);
+            color: #818cf8; cursor: pointer; transition: all 0.2s ease;
+        }
+        .email-toggle-btn:hover { background: rgba(99,102,241,0.2); }
+        .email-body-preview {
+            background: rgba(7,8,15,0.7); border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 10px; padding: 16px;
+            font-size: 13px; color: #94a3b8; line-height: 1.7;
+            max-height: 280px; overflow-y: auto;
+        }
+
+        /* ─── Refinement Box ─────────────────────────────────── */
+        .refine-container {
+            margin-top: 12px;
+            padding: 14px;
+            background: rgba(99,102,241,0.04);
+            border: 1px solid rgba(99,102,241,0.2);
+            border-radius: 12px;
+        }
+        .refine-textarea {
+            width: 100%; min-height: 60px;
+            background: rgba(15,16,28,0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 10px; color: #cbd5e1;
+            font-size: 12px; outline: none; margin-bottom: 10px;
+            transition: all 0.2s ease;
+        }
+        .refine-textarea:focus { border-color: rgba(99,102,241,0.5); background: rgba(15,16,28,0.8); }
+        .action-btn-group { display: flex; gap: 8px; }
+        .action-btn {
+            flex: 1; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .btn-refine { background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.25); }
+        .btn-refine:hover { background: rgba(99,102,241,0.25); }
+        .btn-send { background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; border: none; }
+        .btn-send:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* ─── Badge Pending ──────────────────────────────────── */
+        .badge-pending { background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }
+        .badge-pending .badge-dot { background: #818cf8; animation: pulse-ring 2s infinite; }
+
+
+        /* ─── Notification ───────────────────────────────────── */
+        #notification-area { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .notif {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 18px; border-radius: 12px;
+            font-size: 14px; font-weight: 500; color: white;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            opacity: 0; transform: translateX(20px);
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            max-width: 340px;
+        }
+        .notif.show { opacity: 1; transform: translateX(0); }
+        .notif-success { background: rgba(30,30,50,0.95); border: 1px solid rgba(99,102,241,0.4); }
+        .notif-error { background: rgba(40,15,15,0.95); border: 1px solid rgba(239,68,68,0.4); }
+        .notif-icon { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; }
+        .notif-success .notif-icon { background: rgba(99,102,241,0.3); color: #a5b4fc; }
+        .notif-error .notif-icon { background: rgba(239,68,68,0.3); color: #fca5a5; }
+
+        /* ─── Placeholder State ──────────────────────────────── */
+        .placeholder-icon {
+            width: 80px; height: 80px;
+            background: rgba(99,102,241,0.08);
+            border: 1px solid rgba(99,102,241,0.15);
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        /* ─── Nav Brand ──────────────────────────────────────── */
+        .brand-icon {
+            width: 34px; height: 34px; border-radius: 10px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 16px rgba(99,102,241,0.4);
+        }
+
+        /* ─── Status Chip in header ──────────────────────────── */
+        .status-chip {
+            display: flex; align-items: center; gap: 6px;
+            padding: 5px 12px; border-radius: 99px;
+            background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2);
+            font-size: 12px; color: #818cf8; font-weight: 500;
+        }
+        .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #6ee7b7; animation: pulse-ring 2s ease-in-out infinite; }
+
+        /* ─── Divider label ──────────────────────────────────── */
+        .divider-label {
+            display: flex; align-items: center; gap: 10px; margin: 4px 0;
+            font-size: 11px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.08em;
+        }
+        .divider-label::before, .divider-label::after {
+            content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06);
+        }
+
+        /* ─── Results summary bar ────────────────────────────── */
+        .summary-bar {
+            display: flex; align-items: center; gap: 14px;
+            padding: 12px 20px; border-radius: 12px;
+            background: rgba(15,16,28,0.7); border: 1px solid rgba(255,255,255,0.07);
+            margin-bottom: 16px;
+        }
+        .summary-stat { text-align: center; flex: 1; }
+        .summary-stat-value { font-size: 22px; font-weight: 800; }
+        .summary-stat-label { font-size: 11px; color: #475569; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; }
+        .summary-divider { width: 1px; height: 36px; background: rgba(255,255,255,0.07); }
     </style>
-    </head>
-<body class="text-gray-300">
+</head>
+<body>
 
-    <div class="flex h-screen bg-gray-900 text-white">
+<!-- Ambient Background -->
+<div class="bg-mesh" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+</div>
 
-        <div class="w-1/2 h-full flex flex-col p-8 border-r border-gray-700">
-            <header class="text-center mb-8">
-                <h1 class="text-4xl font-extrabold">AI Recruitment <span class="gradient-text">Assistant</span></h1>
-                <p class="mt-2 text-md text-gray-400">Your automated hiring workspace.</p>
-            </header>
+<!-- Notification Area -->
+<div id="notification-area" role="alert" aria-live="polite"></div>
 
-            <form id="upload-form" class="space-y-6 flex-grow flex flex-col">
-                <div>
-                    <label for="job_description_text" class="text-xl font-bold mb-3 text-white block">Step 1: Job Description</label>
-                    <div class="relative">
-                        <textarea id="job_description_text" name="job_description_text" rows="10" class="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-gray-300 focus:ring-2 focus:ring-indigo-500 transition placeholder-gray-500" placeholder="Enter notes like 'Python dev, 5 years, aws, flask' and click Generate... or paste a full JD."></textarea>
-                        <button type="button" id="generate-jd-btn" class="absolute bottom-3 right-3 bg-indigo-600 text-white font-semibold py-1 px-3 rounded-lg text-sm hover:bg-indigo-700 transition-transform transform hover:scale-105">✨ Generate with AI</button>
+<!-- Hidden SVG Defs for score gradients -->
+<svg width="0" height="0" style="position:absolute">
+    <defs>
+        <linearGradient id="scoreGradGood" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#4f46e5"/>
+            <stop offset="100%" stop-color="#a78bfa"/>
+        </linearGradient>
+        <linearGradient id="scoreGradPoor" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#d97706"/>
+            <stop offset="100%" stop-color="#fbbf24"/>
+        </linearGradient>
+    </defs>
+</svg>
+
+<!-- App Shell -->
+<div class="app-shell">
+
+    <!-- ── Global Header ──────────────────────────────────────── -->
+    <header class="app-header">
+        <div class="flex items-center gap-3">
+            <div class="brand-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="font-bold text-[15px] text-white leading-none" style="font-family:'Plus Jakarta Sans',sans-serif;">
+                    AI Recruitment <span class="grad-text">Assistant</span>
+                </h1>
+                <p class="text-[11px] text-slate-500 mt-0.5">Multi-Agent Hiring Automation</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="status-chip">
+                <span class="status-dot"></span>
+                Agents Ready
+            </div>
+
+        </div>
+    </header>
+
+    <!-- ── Left Panel: Input Form ─────────────────────────────── -->
+    <aside class="panel-left">
+        <form id="upload-form" class="flex flex-col h-full p-6 gap-5">
+
+            <!-- Step 1: Job Description -->
+            <div class="flex flex-col gap-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="step-badge">1</span>
+                    <span class="text-[15px] font-700 text-white" style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:700;">Job Description</span>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <textarea
+                        id="job_description_text"
+                        name="job_description_text"
+                        rows="11"
+                        class="jd-textarea"
+                        placeholder="Paste a full job description here — or type quick notes like 'Python dev, 5 yrs exp, AWS, Flask' and click ✨ Generate with AI below."
+                    ></textarea>
+                    <div class="flex justify-end">
+                        <button type="button" id="generate-jd-btn" class="ai-btn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            Generate with AI
+                        </button>
                     </div>
                 </div>
-                
-                <div class="flex-grow flex flex-col">
-                    <label for="resumes" class="text-xl font-bold mb-3 text-white block">Step 2: Candidate Resumes</label>
-                    <label for="resumes" class="cursor-pointer border-2 border-dashed border-gray-600 hover:border-indigo-500 bg-gray-800/50 rounded-lg p-6 flex flex-col items-center justify-center text-center transition flex-grow">
-                        <svg class="w-12 h-12 text-gray-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                        <span class="text-gray-400">Click to Upload Resumes</span>
-                        <span id="resume-filenames" class="text-xs font-medium text-indigo-400 mt-2 max-w-full truncate"></span>
-                    </label>
-                    <input type="file" id="resumes" name="resumes" class="hidden" multiple required>
+            </div>
+
+            <div class="divider-label">then</div>
+
+            <!-- Step 2: Resume Upload -->
+            <div class="flex flex-col gap-3 flex-1">
+                <div class="flex items-center gap-2.5">
+                    <span class="step-badge">2</span>
+                    <span class="text-[15px] font-700 text-white" style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:700;">Candidate Resumes</span>
                 </div>
 
-                <div class="pt-4">
-                    <button type="submit" class="w-full gradient-bg text-white font-bold py-3 px-6 rounded-lg text-lg hover:shadow-xl hover:shadow-indigo-500/30 focus:outline-none focus:ring-4 focus:ring-indigo-500/50 transition-transform transform hover:scale-105">
+                <label for="resumes" id="upload-zone" class="upload-zone flex flex-col items-center justify-center p-6 gap-2 flex-1 min-h-[140px]">
+                    <div id="upload-icon-wrap" class="flex flex-col items-center gap-2 text-center">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center" style="background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.2);">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-600 text-slate-300">Drop PDFs here or <span class="text-indigo-400">browse</span></p>
+                            <p class="text-xs text-slate-500 mt-0.5">Multiple files supported · PDF format</p>
+                        </div>
+                    </div>
+                    <div id="file-chips" class="hidden flex-wrap justify-center gap-2 mt-1 w-full"></div>
+                </label>
+                <input type="file" id="resumes" name="resumes" class="hidden" multiple accept=".pdf" required>
+            </div>
+
+            <!-- Submit -->
+            <div>
+                <button type="submit" id="submit-btn" class="submit-btn">
+                    <span id="submit-btn-text" class="flex items-center justify-center gap-2">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                            <path stroke-linecap="round" d="M11 8v6M8 11h6"/>
+                        </svg>
                         Process Candidates
-                    </button>
-                </div>
-            </form>
-        </div>
+                    </span>
+                </button>
+            </div>
 
-        <div class="w-1/2 h-full bg-gray-800 p-8 overflow-y-auto">
-            <div id="results-container" class="space-y-6">
-                 <div id="placeholder" class="text-center text-gray-600 pt-32 h-full flex flex-col justify-center items-center">
-                    <svg class="w-24 h-24 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <h2 class="text-2xl font-bold">Results Will Appear Here</h2>
-                    <p>Complete the steps on the left to begin analysis.</p>
+        </form>
+    </aside>
+
+    <!-- ── Right Panel: Results ──────────────────────────────── -->
+    <main class="panel-right p-6 flex flex-col">
+
+        <!-- Placeholder State -->
+        <div id="placeholder" class="flex flex-col items-center justify-center h-full text-center">
+            <div class="placeholder-icon">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+            </div>
+            <h2 class="text-xl font-bold text-white" style="font-family:'Plus Jakarta Sans',sans-serif;">Results Will Appear Here</h2>
+            <p class="text-sm text-slate-500 mt-2 max-w-xs">Complete the steps on the left — upload resumes and click <em>Process Candidates</em> to begin AI analysis.</p>
+            <div class="mt-8 flex flex-col gap-2 text-left max-w-xs w-full">
+                <div class="flex items-center gap-2.5 text-xs text-slate-600">
+                    <div class="w-1.5 h-1.5 rounded-full bg-indigo-500/50"></div>Resumes scored 0-100 against the JD
                 </div>
-                <div id="loader" class="hidden flex flex-col items-center justify-center text-center py-8">
-                    <div class="loader"></div>
-                    <p id="loader-text" class="mt-4 text-lg font-medium text-gray-400">AI agents at work...</p>
+                <div class="flex items-center gap-2.5 text-xs text-slate-600">
+                    <div class="w-1.5 h-1.5 rounded-full bg-indigo-500/50"></div>Candidates ≥ 70% receive an invitation email
+                </div>
+                <div class="flex items-center gap-2.5 text-xs text-slate-600">
+                    <div class="w-1.5 h-1.5 rounded-full bg-indigo-500/50"></div>Others receive a polite rejection email
                 </div>
             </div>
         </div>
-    </div>
+
+        <!-- Loader State -->
+        <div id="loader" class="hidden flex flex-col items-center justify-center h-full gap-6">
+            <div class="loader-ring"></div>
+            <div class="text-center">
+                <p id="loader-title" class="text-base font-semibold text-white" style="font-family:'Plus Jakarta Sans',sans-serif;">AI Agents At Work</p>
+                <p id="loader-text" class="text-sm text-slate-500 mt-1">Initialising pipeline…</p>
+            </div>
+            <!-- Pipeline Steps -->
+            <div id="pipeline-steps" class="flex flex-col gap-2 w-full max-w-xs">
+                <div class="pipeline-step" id="step-screen">
+                    <div class="step-dot"></div>Resume Screening & Scoring
+                </div>
+                <div class="pipeline-step" id="step-draft">
+                    <div class="step-dot"></div>Email Drafting
+                </div>
+                <div class="pipeline-step" id="step-send">
+                    <div class="step-dot"></div>Sending Communications
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Container -->
+        <div id="results-container" class="hidden flex-col gap-4">
+            <!-- Summary bar and cards injected here by JS -->
+        </div>
+
+    </main>
+</div>
+
 <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('upload-form');
-            const resumesInput = document.getElementById('resumes');
-            const resumeFilenamesSpan = document.getElementById('resume-filenames');
-            const resultsContainer = document.getElementById('results-container');
-            const loader = document.getElementById('loader');
-            const generateJdBtn = document.getElementById('generate-jd-btn');
-            const jdTextarea = document.getElementById('job_description_text');
-            const placeholder = document.getElementById('placeholder');
-            const notificationArea = document.getElementById('notification-area');
+document.addEventListener('DOMContentLoaded', () => {
 
-            const showNotification = (message, isError = false) => {
-                const notif = document.createElement('div');
-                notif.className = `notification ${isError ? 'bg-red-600' : 'bg-indigo-600'}`;
-                notif.textContent = message;
-                notificationArea.appendChild(notif);
-                setTimeout(() => { notif.classList.add('show'); }, 10);
-                setTimeout(() => { notif.classList.remove('show'); setTimeout(() => notif.remove(), 300); }, 3000);
-            };
+    /* ── DOM refs ────────────────────────────────────────── */
+    const form              = document.getElementById('upload-form');
+    const resumesInput      = document.getElementById('resumes');
+    const uploadZone        = document.getElementById('upload-zone');
+    const fileChips         = document.getElementById('file-chips');
+    const uploadIconWrap    = document.getElementById('upload-icon-wrap');
+    const resultsContainer  = document.getElementById('results-container');
+    const loader            = document.getElementById('loader');
+    const loaderText        = document.getElementById('loader-text');
+    const placeholder       = document.getElementById('placeholder');
+    const generateJdBtn     = document.getElementById('generate-jd-btn');
+    const jdTextarea        = document.getElementById('job_description_text');
+    const submitBtn         = document.getElementById('submit-btn');
+    const submitBtnText     = document.getElementById('submit-btn-text');
+    const notificationArea  = document.getElementById('notification-area');
+    const stepScreen        = document.getElementById('step-screen');
+    const stepDraft         = document.getElementById('step-draft');
+    const stepSend          = document.getElementById('step-send');
 
-            const displayError = (message) => {
-                resultsContainer.innerHTML = `<div class="bg-red-900/50 border border-red-700 text-red-300 p-4 rounded-lg" role="alert"><p class="font-bold">Error</p><p>${message}</p></div>`;
-            };
+    /* ── Notifications ───────────────────────────────────── */
+    function showNotification(message, isError = false) {
+        const n = document.createElement('div');
+        n.className = `notif ${isError ? 'notif-error' : 'notif-success'}`;
+        n.innerHTML = `
+            <div class="notif-icon">${isError ? '✕' : '✓'}</div>
+            <span>${message}</span>`;
+        notificationArea.appendChild(n);
+        requestAnimationFrame(() => { n.classList.add('show'); });
+        setTimeout(() => { n.classList.remove('show'); setTimeout(() => n.remove(), 350); }, 3500);
+    }
 
-            const createResultCard = (result) => {
-                if (!result?.state?.screening_results) { return null; }
-                const { filename, state } = result;
-                const { screening_results = {}, drafted_email, final_status } = state;
-                const candidateName = screening_results.candidateName || "N/A";
-                const candidateEmail = screening_results.candidateEmail || "N/A";
-                const matchScore = screening_results.matchScore || 0;
-                const summary = screening_results.summary || "No summary available.";
-                const card = document.createElement('div');
-                card.className = 'bg-gray-900/50 backdrop-blur-sm p-6 rounded-2xl border';
-                const isGoodMatch = matchScore >= 70;
-                
-                if (isGoodMatch) {
-                    card.classList.add('gradient-border-good', 'border-2');
-                } else {
-                    card.classList.add('gradient-border-bad', 'border-2');
-                }
-                
-                let statusMessage = '';
-                if (final_status) {
-                    statusMessage = final_status;
-                } else if (drafted_email?.body) {
-                    statusMessage = 'Email sent successfully.';
-                } else if (isGoodMatch && (candidateEmail === 'N/A' || !candidateEmail)) {
-                    statusMessage = 'Candidate is a good match, but no email was found.';
-                } else {
-                    statusMessage = 'Candidate did not meet the minimum score.';
-                }
-                const draftedEmailBody = drafted_email?.body || '';
-                let emailSection = `<div class="mt-4 pt-4 border-t border-gray-700"><p class="text-sm font-medium text-gray-400">Status: <span class="font-semibold ${isGoodMatch ? 'text-indigo-400' : 'text-amber-400'}">${statusMessage}</span></p></div>`;
-                if (draftedEmailBody) {
-                    emailSection += `<div class="mt-4 p-4 bg-gray-800 rounded-lg text-sm text-gray-300 whitespace-pre-wrap border border-gray-700"><strong>Sent Email:</strong><br><br>${draftedEmailBody.replace(/\n/g, '<br>')}</div>`;
-                }
-                card.innerHTML = `
-                    <div class="flex justify-between items-start gap-4">
-                        <div><h3 class="text-xl font-bold text-white">${candidateName}</h3><p class="text-sm text-gray-400">${candidateEmail} (${filename})</p></div>
-                        <div class="text-right flex-shrink-0"><p class="text-sm text-gray-400">Match Score</p><p class="text-3xl font-bold ${isGoodMatch ? 'text-indigo-400' : 'text-amber-400'}">${matchScore}%</p></div>
-                    </div>
-                    <div class="mt-4"><div class="w-full bg-gray-700 rounded-full h-2.5"><div class="h-2.5 rounded-full ${isGoodMatch ? 'gradient-bg' : 'bg-amber-500'}" style="width: ${matchScore}%"></div></div></div>
-                    <div class="mt-5"><h4 class="font-semibold text-gray-200">AI Summary:</h4><p class="mt-1 text-sm text-gray-400">${summary}</p></div>
-                    ${emailSection}`;
-                return card;
-            };
+    /* ── File Upload UX ──────────────────────────────────── */
+    function renderFileChips(files) {
+        fileChips.innerHTML = '';
+        if (files.length === 0) {
+            fileChips.classList.add('hidden');
+            uploadIconWrap.classList.remove('hidden');
+            uploadZone.classList.remove('has-files');
+            return;
+        }
+        uploadZone.classList.add('has-files');
+        uploadIconWrap.classList.add('hidden');
+        fileChips.classList.remove('hidden');
 
-            const displayResults = (results) => {
-                placeholder.classList.add('hidden');
-                resultsContainer.innerHTML = '';
-                if (!results || results.length === 0) {
-                    placeholder.classList.remove('hidden');
-                    return;
-                }
-                results.forEach(result => {
-                    const card = createResultCard(result);
-                    if (card) resultsContainer.appendChild(card);
-                });
-            };
+        // Show count badge
+        const countBadge = document.createElement('div');
+        countBadge.className = 'w-full text-center text-xs font-600 text-indigo-400 mb-1';
+        countBadge.textContent = `${files.length} PDF${files.length > 1 ? 's' : ''} selected`;
+        fileChips.appendChild(countBadge);
 
-            resumesInput.addEventListener('change', () => {
-                const files = resumesInput.files;
-                if (files.length > 0) {
-                    const fileNames = Array.from(files).map(f => f.name);
-                    resumeFilenamesSpan.textContent = fileNames.join(', ');
-                } else {
-                    resumeFilenamesSpan.textContent = '';
-                }
-            });
-
-            generateJdBtn.addEventListener('click', async () => {
-                const notes = jdTextarea.value;
-                if (!notes.trim()) {
-                    showNotification('Please enter some notes to generate.', true);
-                    return;
-                }
-                generateJdBtn.textContent = 'Generating...';
-                generateJdBtn.disabled = true;
-                try {
-                    const response = await fetch('/generate_jd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ notes: notes }) });
-                    const data = await response.json();
-                    if (response.ok) {
-                        jdTextarea.value = data.job_description;
-                    } else {
-                        showNotification(data.error || 'An unknown error occurred.', true);
-                    }
-                } catch (error) {
-                    console.error("JD Generation Error:", error);
-                    showNotification("Failed to connect to the server.", true);
-                } finally {
-                    generateJdBtn.textContent = '✨ Generate with AI';
-                    generateJdBtn.disabled = false;
-                }
-            });
-
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                placeholder.classList.add('hidden');
-                resultsContainer.innerHTML = '';
-                loader.classList.remove('hidden');
-                resultsContainer.appendChild(loader);
-                const formData = new FormData(form);
-                try {
-                    const response = await fetch('/process', { method: 'POST', body: formData });
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        throw new Error(`Server error: ${response.statusText} - ${errorText}`);
-                    }
-                    const results = await response.json();
-                    displayResults(results);
-                } catch (error) {
-                    console.error('Processing error:', error);
-                    displayError('An error occurred. Please check the browser console for details.');
-                } finally {
-                    loader.classList.add('hidden');
-                }
-            });
+        const row = document.createElement('div');
+        row.className = 'flex flex-wrap justify-center gap-2';
+        Array.from(files).slice(0, 8).forEach(f => {
+            const chip = document.createElement('div');
+            chip.className = 'file-chip';
+            chip.innerHTML = `
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span>${f.name}</span>`;
+            row.appendChild(chip);
         });
-    </script>
+        if (files.length > 8) {
+            const more = document.createElement('div');
+            more.className = 'file-chip';
+            more.innerHTML = `<span>+${files.length - 8} more</span>`;
+            row.appendChild(more);
+        }
+        fileChips.appendChild(row);
+    }
+
+    resumesInput.addEventListener('change', () => renderFileChips(resumesInput.files));
+
+    // Drag and drop
+    uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('drag-over');
+        const dt = e.dataTransfer;
+        if (dt.files.length > 0) {
+            const pdfFiles = Array.from(dt.files).filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+            if (pdfFiles.length === 0) { showNotification('Please drop PDF files only.', true); return; }
+            // Assign files to input via DataTransfer
+            const transfer = new DataTransfer();
+            pdfFiles.forEach(f => transfer.items.add(f));
+            resumesInput.files = transfer.files;
+            renderFileChips(resumesInput.files);
+        }
+    });
+
+    /* ── AI JD Generation ────────────────────────────────── */
+    generateJdBtn.addEventListener('click', async () => {
+        const notes = jdTextarea.value.trim();
+        if (!notes) { showNotification('Please enter notes or keywords to generate a JD.', true); return; }
+
+        generateJdBtn.innerHTML = '<div class="spinner"></div> Generating…';
+        generateJdBtn.disabled = true;
+        try {
+            const res = await fetch('/generate_jd', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                jdTextarea.value = data.job_description;
+                showNotification('Job description generated successfully!');
+                jdTextarea.style.height = 'auto';
+            } else {
+                showNotification(data.error || 'An error occurred during generation.', true);
+            }
+        } catch (err) {
+            console.error('JD Generation Error:', err);
+            showNotification('Could not reach the server. Is Flask running?', true);
+        } finally {
+            generateJdBtn.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                Generate with AI`;
+            generateJdBtn.disabled = false;
+        }
+    });
+
+    /* ── Pipeline Loader Animation ───────────────────────── */
+    let pipelineInterval = null;
+    function startLoaderAnimation() {
+        const steps = [stepScreen, stepDraft, stepSend];
+        steps.forEach(s => s.className = 'pipeline-step');
+        let i = 0;
+        function tick() {
+            steps.forEach((s, j) => {
+                if (j < i) s.className = 'pipeline-step done';
+                else if (j === i) s.className = 'pipeline-step active';
+                else s.className = 'pipeline-step';
+            });
+            const messages = ['Screening resumes & scoring candidates…', 'Drafting personalised emails…', 'Sending out communications…'];
+            loaderText.textContent = messages[i] || 'Finalising results…';
+            i = (i + 1) % (steps.length + 1);
+        }
+        tick();
+        pipelineInterval = setInterval(tick, 2800);
+    }
+    function stopLoaderAnimation() {
+        clearInterval(pipelineInterval);
+        [stepScreen, stepDraft, stepSend].forEach(s => s.className = 'pipeline-step done');
+    }
+
+    /* ── Form Submission ─────────────────────────────────── */
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Validate
+        if (!jdTextarea.value.trim()) { showNotification('Please provide a job description.', true); return; }
+        if (!resumesInput.files.length) { showNotification('Please select at least one resume PDF.', true); return; }
+
+        // Show loader
+        placeholder.classList.add('hidden');
+        resultsContainer.classList.add('hidden');
+        resultsContainer.classList.remove('flex');
+        loader.classList.remove('hidden');
+        loader.classList.add('flex');
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.7';
+        startLoaderAnimation();
+
+        const formData = new FormData(form);
+        try {
+            const res = await fetch('/process', { method: 'POST', body: formData });
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(`Server error ${res.status}: ${errText.slice(0, 200)}`);
+            }
+            const results = await res.json();
+            stopLoaderAnimation();
+            displayResults(results);
+        } catch (err) {
+            console.error('Processing error:', err);
+            stopLoaderAnimation();
+            loader.classList.add('hidden');
+            loader.classList.remove('flex');
+            displayError(err.message || 'An unexpected error occurred. Check the console for details.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '';
+            loader.classList.add('hidden');
+            loader.classList.remove('flex');
+        }
+    });
+
+    /* ── Display Helpers ─────────────────────────────────── */
+    function displayError(message) {
+        placeholder.classList.add('hidden');
+        resultsContainer.innerHTML = `
+            <div style="background:rgba(40,10,10,0.7);border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:20px;" role="alert">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                    <div style="width:28px;height:28px;border-radius:50%;background:rgba(239,68,68,0.2);display:flex;align-items:center;justify-content:center;color:#fca5a5;font-size:13px;">✕</div>
+                    <p style="font-weight:700;color:#fca5a5;font-size:15px;">Processing Failed</p>
+                </div>
+                <p style="font-size:13px;color:#94a3b8;margin-left:38px;">${message}</p>
+            </div>`;
+        resultsContainer.classList.remove('hidden');
+        resultsContainer.classList.add('flex');
+    }
+
+    function displayResults(results) {
+        resultsContainer.innerHTML = '';
+        placeholder.classList.add('hidden');
+
+        if (!results || results.length === 0) {
+            placeholder.classList.remove('hidden');
+            return;
+        }
+
+        // Summary bar
+        const good = results.filter(r => (r.state?.screening_results?.matchScore || 0) >= 70).length;
+        const poor = results.length - good;
+        const avg  = Math.round(results.reduce((a, r) => a + (r.state?.screening_results?.matchScore || 0), 0) / results.length);
+
+        const summaryBar = document.createElement('div');
+        summaryBar.className = 'summary-bar';
+        summaryBar.innerHTML = `
+            <div class="summary-stat">
+                <div class="summary-stat-value text-white">${results.length}</div>
+                <div class="summary-stat-label">Processed</div>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-stat">
+                <div class="summary-stat-value" style="color:#a5b4fc">${good}</div>
+                <div class="summary-stat-label">Shortlisted</div>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-stat">
+                <div class="summary-stat-value" style="color:#fcd34d">${poor}</div>
+                <div class="summary-stat-label">Rejected</div>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-stat">
+                <div class="summary-stat-value" style="background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${avg}%</div>
+                <div class="summary-stat-label">Avg Score</div>
+            </div>`;
+        resultsContainer.appendChild(summaryBar);
+
+        // Cards
+        results.forEach((result, idx) => {
+            const card = createResultCard(result, idx);
+            if (card) resultsContainer.appendChild(card);
+        });
+
+        resultsContainer.classList.remove('hidden');
+        resultsContainer.classList.add('flex');
+    }
+
+    /* ── Result Card Builder ─────────────────────────────── */
+    function createResultCard(result, idx) {
+        if (!result?.state?.screening_results) {
+            console.error('Invalid result object:', result);
+            return null;
+        }
+
+        const { filename, state } = result;
+        const { screening_results = {}, drafted_email, final_status } = state;
+
+        const candidateName  = screening_results.candidateName  || 'Unknown Candidate';
+        const candidateEmail = screening_results.candidateEmail || 'N/A';
+        const matchScore     = typeof screening_results.matchScore === 'number' ? screening_results.matchScore : 0;
+        const summary        = screening_results.summary || 'No summary available.';
+        const isGood         = matchScore >= 70;
+        const emailBody      = drafted_email?.body || '';
+        const emailSubject   = drafted_email?.subject || '';
+
+        const nextStep       = result.next_step || [];
+        const threadId       = result.thread_id;
+        const isInterrupted  = nextStep.includes('email_sender');
+
+        // Status message & badge type
+        let statusMsg = '', badgeClass = '';
+        if (final_status && final_status.startsWith('Success')) {
+            statusMsg = final_status;
+            badgeClass = 'badge-sent';
+        } else if (isInterrupted) {
+            statusMsg = 'Pending Review — Adjust & Approve Below';
+            badgeClass = 'badge-pending';
+        } else if (isGood && candidateEmail === 'N/A') {
+            statusMsg = 'Good match — no email found in resume.';
+            badgeClass = 'badge-good';
+        } else if (isGood) {
+            statusMsg = 'Invitation prepared.';
+            badgeClass = 'badge-good';
+        } else {
+            statusMsg = 'Rejection prepared.';
+            badgeClass = 'badge-poor';
+        }
+
+        // Get initials
+        const initials = candidateName.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase() || '?';
+
+        // Score arc (circumference of r=30 circle = 2π×30 ≈ 188.5)
+        const R = 30, C = 2 * Math.PI * R;
+        const arcOffset = C - (matchScore / 100) * C;
+
+        const card = document.createElement('div');
+        card.className = `result-card ${isGood ? 'good' : 'poor'}`;
+        card.style.animationDelay = `${idx * 80}ms`;
+
+        const cardId = `card-${idx}`;
+
+        card.innerHTML = `
+            <!-- Card Header -->
+            <div class="${isGood ? 'card-header-good' : 'card-header-poor'} p-5 flex items-center gap-4">
+                <!-- Avatar -->
+                <div style="width:48px;height:48px;border-radius:14px;background:${isGood ? 'rgba(79,70,229,0.3)' : 'rgba(217,119,6,0.25)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;font-weight:800;color:${isGood ? '#a5b4fc' : '#fcd34d'};font-family:'Plus Jakarta Sans',sans-serif;border:1px solid ${isGood ? 'rgba(99,102,241,0.4)' : 'rgba(245,158,11,0.35)'}">
+                    ${initials}
+                </div>
+                <!-- Name & Email -->
+                <div class="flex-1 min-w-0">
+                    <h3 style="font-size:16px;font-weight:700;color:white;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${candidateName}</h3>
+                    <p style="font-size:12px;color:#64748b;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${candidateEmail}</p>
+                    <p style="font-size:11px;color:#475569;margin-top:1px;">📄 ${filename}</p>
+                </div>
+                <!-- Score Arc -->
+                <div style="flex-shrink:0;position:relative;width:76px;height:76px;display:flex;align-items:center;justify-content:center;">
+                    <svg width="76" height="76" viewBox="0 0 76 76" style="position:absolute;top:0;left:0;">
+                        <circle class="score-track" cx="38" cy="38" r="${R}"/>
+                        <circle
+                            class="score-arc score-fill ${isGood ? 'good-fill' : 'poor-fill'}"
+                            cx="38" cy="38" r="${R}"
+                            stroke-dasharray="${C}"
+                            stroke-dashoffset="${C}"
+                            data-target-offset="${arcOffset.toFixed(2)}"
+                            id="arc-${cardId}"
+                        />
+                    </svg>
+                    <div style="text-align:center;z-index:1;">
+                        <div style="font-size:18px;font-weight:800;color:${isGood ? '#a5b4fc' : '#fcd34d'};line-height:1;font-family:'Plus Jakarta Sans',sans-serif;">${matchScore}</div>
+                        <div style="font-size:9px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">score</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Body -->
+            <div class="p-5 flex flex-col gap-4">
+                <!-- Score Bar -->
+                <div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <span style="font-size:11px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Match Score</span>
+                        <span style="font-size:12px;font-weight:700;color:${isGood ? '#a5b4fc' : '#fcd34d'}">${matchScore}%</span>
+                    </div>
+                    <div class="score-bar-track">
+                        <div class="score-bar-fill ${isGood ? 'good' : 'poor'}" style="width:0%" data-target-width="${matchScore}%" id="bar-${cardId}"></div>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin-top:4px;">
+                        <span style="font-size:10px;color:#374151;">0%</span>
+                        <span style="font-size:10px;color:${isGood ? '#4f46e5' : '#92400e'};font-weight:600;">${isGood ? '✓ Above threshold' : '✗ Below threshold (70%)'}</span>
+                        <span style="font-size:10px;color:#374151;">100%</span>
+                    </div>
+                </div>
+
+                <!-- AI Summary -->
+                <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:14px;">
+                    <div style="font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;display:flex;align-items:center;gap:5px;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        AI Analysis
+                    </div>
+                    <p style="font-size:13px;color:#94a3b8;line-height:1.65;">${summary}</p>
+                </div>
+
+                <!-- Status & Email -->
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                    <div style="display:flex;align-items:center;gap-6px;">
+                        <span class="badge ${badgeClass}" id="badge-${cardId}">
+                            <span class="badge-dot"></span>
+                            ${statusMsg}
+                        </span>
+                    </div>
+                    ${emailBody ? `<button type="button" class="email-toggle-btn" onclick="toggleEmail('${cardId}')">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/></svg>
+                        <span id="toggle-label-${cardId}">${isInterrupted ? 'Review Draft' : 'View Email'}</span>
+                    </button>` : ''}
+                </div>
+
+                ${emailBody ? `
+                <div id="email-body-${cardId}" class="${isInterrupted ? 'flex' : 'hidden'} flex-col gap-3">
+                    <div class="email-body-preview" style="border-left:3px solid #6366f1;">
+                        ${emailSubject ? `<p style="font-size:12px;color:#64748b;margin-bottom:8px;"><strong style="color:#818cf8;">Subject:</strong> ${emailSubject}</p>` : ''}
+                        ${emailBody.replace(/\n/g, '<br>')}
+                    </div>
+                    
+                    ${isInterrupted ? `
+                    <div class="refine-container" id="refine-ctrls-${cardId}">
+                        <p style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Refinement Box (Ask AI to change something)</p>
+                        <textarea id="refine-input-${cardId}" class="refine-textarea" placeholder="e.g. 'Make it more formal', 'Mention the 10% bonus', etc."></textarea>
+                        <div class="action-btn-group">
+                            <button type="button" class="action-btn btn-refine" onclick="refineAction('${cardId}', '${threadId}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                Refine with AI
+                            </button>
+                            <button type="button" id="send-btn-${cardId}" class="action-btn btn-send" onclick="sendAction('${cardId}', '${threadId}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m22 2-7 20-4-9-9-4 20-7z"/><path d="M22 2 11 13"/></svg>
+                                Finalize & Send
+                            </button>
+                        </div>
+                    </div>` : ''}
+                </div>` : ''}
+            </div>`;
+
+        return card;
+    }
+
+    /* ── Email Toggle ─────────────────────────────────────── */
+    window.toggleEmail = (cardId) => {
+        const emailDiv   = document.getElementById(`email-body-${cardId}`);
+        const toggleLabel = document.getElementById(`toggle-label-${cardId}`);
+        if (!emailDiv) return;
+        const isHidden = emailDiv.classList.contains('hidden');
+        emailDiv.classList.toggle('hidden');
+        emailDiv.classList.remove('flex');
+        if (isHidden) emailDiv.classList.add('flex');
+        toggleLabel.textContent = isHidden ? 'Hide Email' : 'Review Draft';
+    };
+
+    /* ── Refinement & Send Actions ────────────────────────── */
+    window.refineAction = async (cardId, threadId) => {
+        const input = document.getElementById(`refine-input-${cardId}`);
+        const instructions = input.value.trim();
+        if (!instructions) { showNotification('Please enter refinement instructions.', true); return; }
+
+        input.disabled = true;
+        const btn = input.nextElementSibling.querySelector('.btn-refine');
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<div class="spinner" style="width:12px;height:12px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;animation:spin 0.7s linear infinite;"></div> Refining…';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/refine_email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ thread_id: threadId, instructions })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                // Update specific card UI
+                const emailDiv = document.getElementById(`email-body-${cardId}`);
+                const preview = emailDiv.querySelector('.email-body-preview');
+                const newBody = data.new_state.drafted_email.body;
+                const newSubject = data.new_state.drafted_email.subject;
+                
+                preview.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:4px 8px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:6px;width:fit-content;">
+                        <span style="width:6px;height:6px;border-radius:50%;background:#10b981;"></span>
+                        <span style="font-size:10px;font-weight:700;color:#10b981;text-transform:uppercase;letter-spacing:0.05em;">Draft Updated by AI</span>
+                    </div>
+                    <p style="font-size:12px;color:#64748b;margin-bottom:8px;"><strong style="color:#818cf8;">Subject:</strong> ${newSubject}</p>
+                    ${newBody.replace(/\n/g, '<br>')}
+                `;
+                input.value = '';
+                showNotification('AI has refined the draft based on your feedback.');
+                
+                // Pulse effect to show update
+                preview.style.animation = 'none';
+                preview.offsetHeight; // trigger reflow
+                preview.style.animation = 'pulse-ring 1s ease-out';
+            } else {
+                showNotification(data.error || 'Refinement failed.', true);
+            }
+        } catch (err) {
+            console.error(err);
+            showNotification('Network error during refinement.', true);
+        } finally {
+            input.disabled = false;
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+    };
+
+    window.sendAction = async (cardId, threadId) => {
+        const btn = document.getElementById(`send-btn-${cardId}`);
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<div class="spinner" style="margin:0"></div> Sending…';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/send_email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ thread_id: threadId })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                // Remove refinement ctrls
+                document.getElementById(`refine-ctrls-${cardId}`).remove();
+                // Update badge
+                const badge = document.getElementById(`badge-${cardId}`);
+                badge.className = 'badge badge-sent';
+                badge.innerHTML = '<span class="badge-dot"></span> Email Sent Successfully';
+                showNotification('Email has been dispatched to the candidate.');
+            } else {
+                showNotification(data.error || 'Failed to send email.', true);
+            }
+        } catch (err) {
+            console.error(err);
+            showNotification('Network error while sending.', true);
+        } finally {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+    };
+
+
+    /* ── Animate Scores After Render ─────────────────────── */
+    const observer = new MutationObserver(() => {
+        // Animate arc
+        document.querySelectorAll('[id^="arc-"]').forEach(arc => {
+            const target = parseFloat(arc.dataset.targetOffset);
+            if (!isNaN(target) && arc.style.strokeDashoffset !== String(target)) {
+                requestAnimationFrame(() => { arc.style.strokeDashoffset = target; });
+            }
+        });
+        // Animate bar
+        document.querySelectorAll('[id^="bar-"]').forEach(bar => {
+            const target = bar.dataset.targetWidth;
+            if (target && bar.style.width !== target) {
+                requestAnimationFrame(() => { bar.style.width = target; });
+            }
+        });
+    });
+    observer.observe(resultsContainer, { childList: true, subtree: true });
+
+});
+</script>
+
 </body>
 </html>
-

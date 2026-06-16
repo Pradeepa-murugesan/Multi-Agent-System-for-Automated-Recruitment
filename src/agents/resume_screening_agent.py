@@ -7,7 +7,7 @@ from src.utils.helpers import clean_and_parse_json
 def screen_resume_node(state) -> dict:
     print("---NODE: SCREENING RESUME (STRICT JSON MODE)---")
 
-    llm = ChatGroq(model_name="gemma2-9b-it", temperature=0)
+    llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0)
     
     resume_text = state["resume_content"]
     job_description_text = state["job_description"]
