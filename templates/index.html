@@ -11,406 +11,222 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        /* ─── Base & Fonts ─────────────────────────────────── */
+        /* ─── Base ───────────────────────────────────────────── */
         *, *::before, *::after { box-sizing: border-box; }
         html { scroll-behavior: smooth; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #07080f;
-            color: #cbd5e1;
-            overflow: hidden;
-        }
+        body { font-family: 'Inter', sans-serif; background: #f0f2f7; color: #1e293b; overflow: hidden; }
 
-        /* ─── Scrollbar ─────────────────────────────────────── */
+        /* ─── Scrollbar ──────────────────────────────────────── */
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #3730a3; border-radius: 99px; }
-        ::-webkit-scrollbar-thumb:hover { background: #6366f1; }
+        ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: #818cf8; }
 
-        /* ─── Background Mesh ───────────────────────────────── */
-        .bg-mesh {
-            position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
-        }
-        .orb {
-            position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.18;
-            animation: float 12s ease-in-out infinite;
-        }
-        .orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, #4f46e5, #7c3aed); top: -200px; left: -100px; animation-delay: 0s; }
-        .orb-2 { width: 500px; height: 500px; background: radial-gradient(circle, #6366f1, #a855f7); bottom: -150px; right: -100px; animation-delay: -4s; }
-        .orb-3 { width: 350px; height: 350px; background: radial-gradient(circle, #3b82f6, #6366f1); top: 40%; left: 45%; animation-delay: -8s; opacity: 0.10; }
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(30px, -30px) scale(1.05); }
-            66% { transform: translate(-20px, 20px) scale(0.97); }
-        }
+        /* ─── Background (subtle) ────────────────────────────── */
+        .bg-mesh { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+        .orb { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.07; animation: float 16s ease-in-out infinite; }
+        .orb-1 { width: 600px; height: 600px; background: #c7d2fe; top: -200px; left: -100px; }
+        .orb-2 { width: 500px; height: 500px; background: #ddd6fe; bottom: -150px; right: -100px; animation-delay: -4s; }
+        .orb-3 { width: 300px; height: 300px; background: #bfdbfe; top: 40%; left: 45%; opacity: 0.04; animation-delay: -8s; }
+        @keyframes float { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(20px,-20px) scale(1.04); } }
 
-        /* ─── Layout ────────────────────────────────────────── */
-        .app-shell {
-            position: relative; z-index: 1;
-            display: grid;
-            grid-template-rows: auto 1fr;
-            grid-template-columns: 480px 1fr;
-            height: 100vh;
-        }
-        .app-header {
-            grid-column: 1 / -1;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 28px;
-            height: 64px;
-            border-bottom: 1px solid rgba(99,102,241,0.15);
-            background: rgba(7,8,15,0.85);
-            backdrop-filter: blur(20px);
-        }
-        .panel-left {
-            border-right: 1px solid rgba(99,102,241,0.12);
-            overflow-y: auto;
-            display: flex; flex-direction: column;
-            background: rgba(10,11,20,0.6);
-            backdrop-filter: blur(10px);
-        }
-        .panel-right {
-            overflow-y: auto;
-            background: rgba(7,8,15,0.4);
-        }
+        /* ─── Layout ─────────────────────────────────────────── */
+        .app-shell { position: relative; z-index: 1; display: grid; grid-template-rows: auto 1fr; grid-template-columns: 460px 1fr; height: 100vh; }
+        .app-header { grid-column: 1/-1; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; height: 58px; border-bottom: 1px solid #e2e8f0; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .panel-left { border-right: 1px solid #e2e8f0; overflow-y: auto; display: flex; flex-direction: column; background: #ffffff; }
+        .panel-right { overflow-y: auto; background: #f0f2f7; }
 
-        /* ─── Glass Card ────────────────────────────────────── */
-        .glass {
-            background: rgba(255,255,255,0.03);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.07);
-            border-radius: 16px;
-        }
-        .glass-deep {
-            background: rgba(15,16,28,0.7);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(99,102,241,0.15);
-            border-radius: 16px;
-        }
+        /* ─── Utilities ──────────────────────────────────────── */
+        .glass { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; }
+        .glass-deep { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; }
+        .grad-text { background: linear-gradient(135deg,#4f46e5,#7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .grad-btn { background: linear-gradient(135deg,#4f46e5,#7c3aed); transition: all .25s; position: relative; overflow: hidden; }
+        .grad-btn::after { content:''; position: absolute; inset:0; background: linear-gradient(135deg,#6366f1,#a855f7); opacity:0; transition: opacity .25s; }
+        .grad-btn:hover::after { opacity:1; }
+        .grad-btn span, .grad-btn svg { position: relative; z-index:1; }
 
-        /* ─── Gradient Utilities ────────────────────────────── */
-        .grad-text {
-            background: linear-gradient(135deg, #a5b4fc 0%, #818cf8 50%, #c084fc 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .grad-btn {
-            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #7c3aed 100%);
-            transition: all 0.25s ease;
-            position: relative; overflow: hidden;
-        }
-        .grad-btn::after {
-            content: ''; position: absolute; inset: 0;
-            background: linear-gradient(135deg, #6366f1 0%, #818cf8 50%, #a855f7 100%);
-            opacity: 0; transition: opacity 0.25s ease;
-        }
-        .grad-btn:hover::after { opacity: 1; }
-        .grad-btn span, .grad-btn svg { position: relative; z-index: 1; }
+        /* ─── Step Badge ─────────────────────────────────────── */
+        .step-badge { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; font-size:12px; font-weight:700; flex-shrink:0; background:linear-gradient(135deg,#4f46e5,#7c3aed); color:white; }
 
-        /* ─── Step Badge ────────────────────────────────────── */
-        .step-badge {
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 28px; height: 28px; border-radius: 50%;
-            font-size: 12px; font-weight: 700; flex-shrink: 0;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            color: white; box-shadow: 0 0 12px rgba(99,102,241,0.5);
-        }
+        /* ─── Textarea ───────────────────────────────────────── */
+        .jd-textarea { width:100%; resize:none; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; color:#1e293b; font-size:13.5px; line-height:1.7; transition:border-color .2s,box-shadow .2s; outline:none; }
+        .jd-textarea::placeholder { color:#94a3b8; }
+        .jd-textarea:focus { border-color:#818cf8; box-shadow:0 0 0 3px rgba(99,102,241,0.1); background:#fff; }
 
-        /* ─── Textarea ──────────────────────────────────────── */
-        .jd-textarea {
-            width: 100%; resize: none;
-            background: rgba(15,16,28,0.8);
-            border: 1px solid rgba(99,102,241,0.2);
-            border-radius: 12px;
-            padding: 16px;
-            color: #e2e8f0;
-            font-size: 14px; line-height: 1.7;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            outline: none;
-        }
-        .jd-textarea::placeholder { color: #475569; }
-        .jd-textarea:focus {
-            border-color: rgba(99,102,241,0.6);
-            box-shadow: 0 0 0 3px rgba(99,102,241,0.12), 0 0 20px rgba(99,102,241,0.08);
-        }
+        /* ─── AI Button ──────────────────────────────────────── */
+        .ai-btn { display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; padding:7px 13px; border-radius:8px; background:linear-gradient(135deg,#4f46e5,#7c3aed); color:white; border:none; cursor:pointer; transition:all .2s; box-shadow:0 2px 8px rgba(99,102,241,0.25); }
+        .ai-btn:hover { transform:translateY(-1px); box-shadow:0 4px 14px rgba(99,102,241,0.35); }
+        .ai-btn:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+        .ai-btn .spinner { width:14px; height:14px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); border-top-color:white; animation:spin .7s linear infinite; }
 
-        /* ─── AI Generate Button ────────────────────────────── */
-        .ai-btn {
-            display: inline-flex; align-items: center; gap: 6px;
-            font-size: 13px; font-weight: 600;
-            padding: 8px 14px; border-radius: 8px;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            color: white; border: none; cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 0 16px rgba(99,102,241,0.3);
-        }
-        .ai-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.45); }
-        .ai-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-        .ai-btn .spinner {
-            width: 14px; height: 14px; border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            animation: spin 0.7s linear infinite;
-        }
+        /* ─── Upload Zone ────────────────────────────────────── */
+        .upload-zone { border:2px dashed #cbd5e1; border-radius:12px; background:#f8fafc; transition:all .25s; cursor:pointer; position:relative; }
+        .upload-zone:hover, .upload-zone.drag-over { border-color:#818cf8; background:#eef2ff; box-shadow:0 0 0 3px rgba(99,102,241,0.08); }
+        .upload-zone.has-files { border-color:#818cf8; background:#f5f3ff; }
 
-        /* ─── Upload Zone ───────────────────────────────────── */
-        .upload-zone {
-            border: 2px dashed rgba(99,102,241,0.25);
-            border-radius: 14px;
-            background: rgba(15,16,28,0.5);
-            transition: all 0.25s ease;
-            cursor: pointer; position: relative;
-        }
-        .upload-zone:hover, .upload-zone.drag-over {
-            border-color: rgba(99,102,241,0.7);
-            background: rgba(99,102,241,0.06);
-            box-shadow: 0 0 24px rgba(99,102,241,0.12);
-        }
-        .upload-zone.has-files {
-            border-color: rgba(99,102,241,0.5);
-            background: rgba(99,102,241,0.05);
-        }
+        /* ─── File Chips ─────────────────────────────────────── */
+        .file-chip { display:inline-flex; align-items:center; gap:6px; background:#eef2ff; border:1px solid #c7d2fe; border-radius:99px; padding:4px 10px; font-size:12px; color:#4338ca; max-width:180px; }
+        .file-chip span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-        /* ─── File Chips ────────────────────────────────────── */
-        .file-chip {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: rgba(99,102,241,0.15);
-            border: 1px solid rgba(99,102,241,0.25);
-            border-radius: 99px; padding: 4px 10px;
-            font-size: 12px; color: #a5b4fc;
-            max-width: 180px;
-        }
-        .file-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        /* ─── Submit Button ──────────────────────────────────── */
+        .submit-btn { width:100%; padding:13px 24px; border-radius:10px; border:none; cursor:pointer; font-size:15px; font-weight:700; color:white; background:linear-gradient(135deg,#4338ca,#6366f1,#7c3aed); box-shadow:0 4px 14px rgba(99,102,241,0.3); transition:all .25s; position:relative; overflow:hidden; }
+        .submit-btn::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,#6366f1,#818cf8,#a78bfa); opacity:0; transition:opacity .25s; }
+        .submit-btn:hover::before { opacity:1; }
+        .submit-btn:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(99,102,241,0.4); }
+        .submit-btn:active { transform:translateY(0); }
+        .submit-btn span { position:relative; z-index:1; }
 
-        /* ─── Submit Button ─────────────────────────────────── */
-        .submit-btn {
-            width: 100%; padding: 14px 24px;
-            border-radius: 12px; border: none; cursor: pointer;
-            font-size: 16px; font-weight: 700; color: white;
-            letter-spacing: 0.01em;
-            background: linear-gradient(135deg, #4338ca 0%, #6366f1 50%, #7c3aed 100%);
-            box-shadow: 0 4px 20px rgba(99,102,241,0.35), 0 1px 0 rgba(255,255,255,0.08) inset;
-            transition: all 0.25s ease;
-            position: relative; overflow: hidden;
-        }
-        .submit-btn::before {
-            content: ''; position: absolute; inset: 0;
-            background: linear-gradient(135deg, #6366f1 0%, #818cf8 50%, #a78bfa 100%);
-            opacity: 0; transition: opacity 0.25s ease;
-        }
-        .submit-btn:hover::before { opacity: 1; }
-        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(99,102,241,0.5); }
-        .submit-btn:active { transform: translateY(0); }
-        .submit-btn span { position: relative; z-index: 1; }
+        /* ─── Loader ─────────────────────────────────────────── */
+        @keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
+        @keyframes pulse-ring { 0%,100% { transform:scale(0.9); opacity:.8; } 50% { transform:scale(1.05); opacity:.4; } }
+        .loader-ring { width:52px; height:52px; border-radius:50%; border:3px solid #e2e8f0; border-top-color:#6366f1; animation:spin .9s linear infinite; position:relative; }
+        .loader-ring::after { content:''; position:absolute; inset:6px; border-radius:50%; border:3px solid #f0f2f7; border-bottom-color:#a78bfa; animation:spin 1.4s linear infinite reverse; }
+        .pipeline-step { display:flex; align-items:center; gap:10px; padding:9px 14px; border-radius:8px; background:#f8fafc; border:1px solid #e2e8f0; font-size:13px; color:#94a3b8; transition:all .4s; }
+        .pipeline-step.active { color:#4338ca; background:#eef2ff; border-color:#c7d2fe; }
+        .pipeline-step.done { color:#059669; background:#f0fdf4; border-color:#a7f3d0; }
+        .step-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; background:currentColor; }
+        .pipeline-step.active .step-dot { animation:pulse-ring 1.5s ease-in-out infinite; }
 
-        /* ─── Loader ────────────────────────────────────────── */
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes pulse-ring {
-            0% { transform: scale(0.9); opacity: 0.8; }
-            50% { transform: scale(1.05); opacity: 0.4; }
-            100% { transform: scale(0.9); opacity: 0.8; }
-        }
-        .loader-ring {
-            width: 64px; height: 64px; border-radius: 50%;
-            border: 3px solid rgba(99,102,241,0.15);
-            border-top-color: #6366f1;
-            animation: spin 0.9s linear infinite;
-            position: relative;
-        }
-        .loader-ring::after {
-            content: ''; position: absolute; inset: 6px;
-            border-radius: 50%; border: 3px solid rgba(167,139,250,0.15);
-            border-bottom-color: #a78bfa;
-            animation: spin 1.4s linear infinite reverse;
-        }
-        .pipeline-step {
-            display: flex; align-items: center; gap: 10px;
-            padding: 10px 16px; border-radius: 10px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.06);
-            font-size: 13px; color: #64748b;
-            transition: all 0.4s ease;
-        }
-        .pipeline-step.active {
-            color: #a5b4fc;
-            background: rgba(99,102,241,0.08);
-            border-color: rgba(99,102,241,0.25);
-        }
-        .pipeline-step.done {
-            color: #6ee7b7; background: rgba(52,211,153,0.06); border-color: rgba(52,211,153,0.2);
-        }
-        .step-dot {
-            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-            background: currentColor;
-        }
-        .pipeline-step.active .step-dot { animation: pulse-ring 1.5s ease-in-out infinite; }
+        /* ─── Progress bar ───────────────────────────────────── */
+        .progress-bar-resume { width:100%; height:4px; border-radius:99px; background:#e2e8f0; overflow:hidden; margin-top:4px; }
+        .progress-bar-resume-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#4f46e5,#a78bfa); transition:width .4s; }
 
-        /* ─── Result Card ───────────────────────────────────── */
-        .result-card {
-            border-radius: 18px; overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.07);
-            background: rgba(15,16,28,0.7);
-            backdrop-filter: blur(16px);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            animation: cardIn 0.4s ease both;
-        }
-        .result-card:hover { transform: translateY(-2px); }
-        .result-card.good { border-color: rgba(99,102,241,0.35); box-shadow: 0 0 24px rgba(99,102,241,0.1); }
-        .result-card.good:hover { box-shadow: 0 8px 32px rgba(99,102,241,0.2); }
-        .result-card.poor { border-color: rgba(245,158,11,0.3); box-shadow: 0 0 20px rgba(245,158,11,0.07); }
-        .result-card.poor:hover { box-shadow: 0 8px 32px rgba(245,158,11,0.15); }
-        @keyframes cardIn {
-            from { opacity: 0; transform: translateY(16px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        /* ─── Result Card ────────────────────────────────────── */
+        .result-card { border-radius:14px; overflow:hidden; border:1px solid #e2e8f0; background:#ffffff; box-shadow:0 1px 4px rgba(0,0,0,0.06); transition:transform .2s,box-shadow .2s; animation:cardIn .35s ease both; }
+        .result-card:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,0.09); }
+        .result-card.good { border-color:#c7d2fe; }
+        .result-card.good:hover { box-shadow:0 6px 20px rgba(99,102,241,0.14); }
+        .result-card.poor { border-color:#fde68a; }
+        .result-card.poor:hover { box-shadow:0 6px 20px rgba(245,158,11,0.12); }
+        @keyframes cardIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        .card-header-good { background:linear-gradient(135deg,#eef2ff,#f5f3ff); }
+        .card-header-poor { background:linear-gradient(135deg,#fffbeb,#fef9c3); }
 
-        .card-header-good { background: linear-gradient(135deg, rgba(79,70,229,0.15), rgba(124,58,237,0.08)); }
-        .card-header-poor { background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(251,191,36,0.05)); }
+        /* ─── Score Arc ──────────────────────────────────────── */
+        .score-arc { transform:rotate(-90deg); }
+        .score-track { fill:none; stroke:#e2e8f0; stroke-width:6; }
+        .score-fill { fill:none; stroke-width:6; stroke-linecap:round; transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1); }
+        .score-fill.good-fill { stroke:url(#scoreGradGood); }
+        .score-fill.poor-fill { stroke:url(#scoreGradPoor); }
+        .score-counter { font-size:17px; font-weight:800; line-height:1; font-family:'Plus Jakarta Sans',sans-serif; }
 
-        /* ─── Score Arc ─────────────────────────────────────── */
-        .score-arc { transform: rotate(-90deg); }
-        .score-track { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 6; }
-        .score-fill { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1); }
-        .score-fill.good-fill { stroke: url(#scoreGradGood); }
-        .score-fill.poor-fill { stroke: url(#scoreGradPoor); }
+        /* ─── Score Bar ──────────────────────────────────────── */
+        .score-bar-track { width:100%; height:6px; border-radius:99px; background:#f1f5f9; overflow:hidden; }
+        .score-bar-fill { height:100%; border-radius:99px; transition:width 1.2s cubic-bezier(.4,0,.2,1); }
+        .score-bar-fill.good { background:linear-gradient(90deg,#4f46e5,#818cf8); }
+        .score-bar-fill.poor { background:linear-gradient(90deg,#f59e0b,#fcd34d); }
 
-        /* ─── Score Bar ─────────────────────────────────────── */
-        .score-bar-track {
-            width: 100%; height: 6px; border-radius: 99px;
-            background: rgba(255,255,255,0.07); overflow: hidden;
-        }
-        .score-bar-fill {
-            height: 100%; border-radius: 99px;
-            transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
-        }
-        .score-bar-fill.good { background: linear-gradient(90deg, #4f46e5, #a78bfa); }
-        .score-bar-fill.poor { background: linear-gradient(90deg, #d97706, #fbbf24); }
-
-        /* ─── Badge ─────────────────────────────────────────── */
-        .badge {
-            display: inline-flex; align-items: center; gap: 5px;
-            padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 600;
-        }
-        .badge-good { background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.25); }
-        .badge-poor { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.25); }
-        .badge-sent { background: rgba(52,211,153,0.12); color: #6ee7b7; border: 1px solid rgba(52,211,153,0.25); }
-        .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+        /* ─── Badges ─────────────────────────────────────────── */
+        .badge { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; }
+        .badge-good   { background:#eef2ff; color:#4338ca; border:1px solid #c7d2fe; }
+        .badge-poor   { background:#fffbeb; color:#92400e; border:1px solid #fde68a; }
+        .badge-sent   { background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; }
+        .badge-pending{ background:#eef2ff; color:#4338ca; border:1px solid #c7d2fe; }
+        .badge-pending .badge-dot { background:#6366f1; animation:pulse-ring 2s infinite; }
+        .badge-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+        .delivery-stamp { font-size:10px; opacity:.6; font-weight:400; }
 
         /* ─── Email Toggle ───────────────────────────────────── */
-        .email-toggle-btn {
-            display: inline-flex; align-items: center; gap: 6px;
-            font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 8px;
-            background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2);
-            color: #818cf8; cursor: pointer; transition: all 0.2s ease;
-        }
-        .email-toggle-btn:hover { background: rgba(99,102,241,0.2); }
-        .email-body-preview {
-            background: rgba(7,8,15,0.7); border: 1px solid rgba(255,255,255,0.07);
-            border-radius: 10px; padding: 16px;
-            font-size: 13px; color: #94a3b8; line-height: 1.7;
-            max-height: 280px; overflow-y: auto;
-        }
+        .email-toggle-btn { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; padding:5px 11px; border-radius:7px; background:#f1f5f9; border:1px solid #e2e8f0; color:#4f46e5; cursor:pointer; transition:all .2s; }
+        .email-toggle-btn:hover { background:#eef2ff; border-color:#c7d2fe; }
+        .email-body-preview { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px; font-size:13px; color:#334155; line-height:1.7; max-height:260px; overflow-y:auto; }
 
         /* ─── Refinement Box ─────────────────────────────────── */
-        .refine-container {
-            margin-top: 12px;
-            padding: 14px;
-            background: rgba(99,102,241,0.04);
-            border: 1px solid rgba(99,102,241,0.2);
-            border-radius: 12px;
-        }
-        .refine-textarea {
-            width: 100%; min-height: 60px;
-            background: rgba(15,16,28,0.6);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            padding: 10px; color: #cbd5e1;
-            font-size: 12px; outline: none; margin-bottom: 10px;
-            transition: all 0.2s ease;
-        }
-        .refine-textarea:focus { border-color: rgba(99,102,241,0.5); background: rgba(15,16,28,0.8); }
-        .action-btn-group { display: flex; gap: 8px; }
-        .action-btn {
-            flex: 1; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;
-            cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 6px;
-        }
-        .btn-refine { background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.25); }
-        .btn-refine:hover { background: rgba(99,102,241,0.25); }
-        .btn-send { background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; border: none; }
-        .btn-send:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        /* ─── Badge Pending ──────────────────────────────────── */
-        .badge-pending { background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }
-        .badge-pending .badge-dot { background: #818cf8; animation: pulse-ring 2s infinite; }
+        .refine-container { margin-top:10px; padding:14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; }
+        .refine-textarea { width:100%; min-height:60px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:10px; color:#1e293b; font-size:12px; outline:none; margin-bottom:10px; transition:all .2s; }
+        .refine-textarea:focus { border-color:#818cf8; box-shadow:0 0 0 2px rgba(99,102,241,0.1); }
+        .action-btn-group { display:flex; gap:8px; }
+        .action-btn { flex:1; padding:8px 12px; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:6px; }
+        .btn-refine { background:#eef2ff; color:#4338ca; border:1px solid #c7d2fe; }
+        .btn-refine:hover { background:#e0e7ff; }
+        .btn-send { background:linear-gradient(135deg,#4f46e5,#6366f1); color:white; border:none; box-shadow:0 2px 8px rgba(99,102,241,0.25); }
+        .btn-send:hover { opacity:.9; transform:translateY(-1px); }
+        .btn-send:disabled { opacity:.5; cursor:not-allowed; }
 
+        /* ─── Notifications ──────────────────────────────────── */
+        #notification-area { position:fixed; top:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:10px; }
+        .notif { display:flex; align-items:center; gap:10px; padding:12px 18px; border-radius:10px; font-size:13.5px; font-weight:500; color:#1e293b; background:#ffffff; box-shadow:0 4px 20px rgba(0,0,0,0.1); opacity:0; transform:translateX(16px); transition:all .3s cubic-bezier(.4,0,.2,1); max-width:320px; border:1px solid #e2e8f0; }
+        .notif.show { opacity:1; transform:translateX(0); }
+        .notif-success { border-left:3px solid #6366f1; }
+        .notif-error   { border-left:3px solid #ef4444; }
+        .notif-icon { width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:11px; }
+        .notif-success .notif-icon { background:#eef2ff; color:#4f46e5; }
+        .notif-error .notif-icon   { background:#fee2e2; color:#dc2626; }
 
-        /* ─── Notification ───────────────────────────────────── */
-        #notification-area { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-        .notif {
-            display: flex; align-items: center; gap: 10px;
-            padding: 12px 18px; border-radius: 12px;
-            font-size: 14px; font-weight: 500; color: white;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            opacity: 0; transform: translateX(20px);
-            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-            max-width: 340px;
-        }
-        .notif.show { opacity: 1; transform: translateX(0); }
-        .notif-success { background: rgba(30,30,50,0.95); border: 1px solid rgba(99,102,241,0.4); }
-        .notif-error { background: rgba(40,15,15,0.95); border: 1px solid rgba(239,68,68,0.4); }
-        .notif-icon { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; }
-        .notif-success .notif-icon { background: rgba(99,102,241,0.3); color: #a5b4fc; }
-        .notif-error .notif-icon { background: rgba(239,68,68,0.3); color: #fca5a5; }
+        /* ─── Placeholder ────────────────────────────────────── */
+        .placeholder-icon { width:72px; height:72px; background:#eef2ff; border:1px solid #c7d2fe; border-radius:18px; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; }
 
-        /* ─── Placeholder State ──────────────────────────────── */
-        .placeholder-icon {
-            width: 80px; height: 80px;
-            background: rgba(99,102,241,0.08);
-            border: 1px solid rgba(99,102,241,0.15);
-            border-radius: 20px;
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 20px;
-        }
+        /* ─── Header / Status ────────────────────────────────── */
+        .brand-icon { width:32px; height:32px; border-radius:9px; background:linear-gradient(135deg,#4f46e5,#7c3aed); display:flex; align-items:center; justify-content:center; }
+        .status-chip { display:flex; align-items:center; gap:6px; padding:5px 12px; border-radius:99px; background:#f0fdf4; border:1px solid #a7f3d0; font-size:12px; color:#065f46; font-weight:500; }
+        .status-dot { width:6px; height:6px; border-radius:50%; background:#10b981; animation:pulse-ring 2s ease-in-out infinite; }
 
-        /* ─── Nav Brand ──────────────────────────────────────── */
-        .brand-icon {
-            width: 34px; height: 34px; border-radius: 10px;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 16px rgba(99,102,241,0.4);
-        }
+        /* ─── Divider ────────────────────────────────────────── */
+        .divider-label { display:flex; align-items:center; gap:10px; margin:4px 0; font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.08em; }
+        .divider-label::before, .divider-label::after { content:''; flex:1; height:1px; background:#e2e8f0; }
 
-        /* ─── Status Chip in header ──────────────────────────── */
-        .status-chip {
-            display: flex; align-items: center; gap: 6px;
-            padding: 5px 12px; border-radius: 99px;
-            background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2);
-            font-size: 12px; color: #818cf8; font-weight: 500;
-        }
-        .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #6ee7b7; animation: pulse-ring 2s ease-in-out infinite; }
+        /* ─── Summary Bar ────────────────────────────────────── */
+        .summary-bar { display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:10px; background:#ffffff; border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.04); margin-bottom:14px; flex-wrap:wrap; }
+        .summary-stat { text-align:center; flex:1; }
+        .summary-stat-value { font-size:20px; font-weight:800; }
+        .summary-stat-label { font-size:10px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:.06em; }
+        .summary-divider { width:1px; height:32px; background:#e2e8f0; }
 
-        /* ─── Divider label ──────────────────────────────────── */
-        .divider-label {
-            display: flex; align-items: center; gap: 10px; margin: 4px 0;
-            font-size: 11px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.08em;
-        }
-        .divider-label::before, .divider-label::after {
-            content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06);
-        }
+        /* ─── Funnel ─────────────────────────────────────────── */
+        .funnel-bar { display:flex; align-items:center; gap:6px; padding:7px 10px; border-radius:7px; background:#f1f5f9; border:1px solid #e2e8f0; font-size:12px; white-space:nowrap; }
+        .funnel-stage { display:flex; flex-direction:column; align-items:center; gap:2px; }
+        .funnel-stage-count { font-size:13px; font-weight:700; color:#4f46e5; }
+        .funnel-stage-label { font-size:10px; color:#94a3b8; text-transform:uppercase; letter-spacing:.05em; }
+        .funnel-arrow { color:#cbd5e1; font-size:13px; }
 
-        /* ─── Results summary bar ────────────────────────────── */
-        .summary-bar {
-            display: flex; align-items: center; gap: 14px;
-            padding: 12px 20px; border-radius: 12px;
-            background: rgba(15,16,28,0.7); border: 1px solid rgba(255,255,255,0.07);
-            margin-bottom: 16px;
-        }
-        .summary-stat { text-align: center; flex: 1; }
-        .summary-stat-value { font-size: 22px; font-weight: 800; }
-        .summary-stat-label { font-size: 11px; color: #475569; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; }
-        .summary-divider { width: 1px; height: 36px; background: rgba(255,255,255,0.07); }
+        /* ─── Skill Tags ─────────────────────────────────────── */
+        .skill-tag { display:inline-flex; align-items:center; padding:3px 9px; border-radius:99px; font-size:11px; font-weight:600; }
+        .skill-tag-matched { background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; }
+        .skill-tag-missing  { background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; }
+
+        /* ─── Score reason / Audit ───────────────────────────── */
+        .score-reason-toggle { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; color:#6366f1; background:none; border:none; cursor:pointer; padding:4px 0; transition:color .2s; }
+        .score-reason-toggle:hover { color:#4f46e5; }
+        .score-reason-body { margin-top:8px; padding:12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; }
+        .audit-log { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; }
+        .audit-entry { display:flex; align-items:center; gap:8px; font-size:11px; color:#64748b; padding:4px 0; border-bottom:1px solid #f1f5f9; }
+        .audit-entry:last-child { border-bottom:none; }
+        .audit-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; background:#6366f1; }
+
+        /* ─── Compare Modal ──────────────────────────────────── */
+        .compare-modal { position:fixed; inset:0; z-index:10000; background:rgba(15,23,42,0.5); backdrop-filter:blur(6px); display:flex; flex-direction:column; overflow-y:auto; padding:24px; }
+        .compare-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:20px; min-width:240px; flex:1; box-shadow:0 4px 16px rgba(0,0,0,0.07); }
+
+        /* ─── Action Buttons ─────────────────────────────────── */
+        .summary-action-btn { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer; transition:all .2s; white-space:nowrap; }
+        .btn-export  { background:#f1f5f9; border:1px solid #e2e8f0; color:#475569; }
+        .btn-export:hover  { background:#e2e8f0; }
+        .btn-compare { background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; }
+        .btn-compare:hover { background:#d1fae5; }
+        .btn-batch-send { background:linear-gradient(135deg,#059669,#10b981); border:none; color:white; box-shadow:0 2px 8px rgba(16,185,129,0.2); }
+        .btn-batch-send:hover { opacity:.9; transform:translateY(-1px); box-shadow:0 4px 14px rgba(16,185,129,0.3); }
+
+        /* ─── View Toggle ────────────────────────────────────── */
+        .view-toggle { display:flex; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:8px; padding:3px; gap:2px; }
+        .view-toggle-btn { padding:5px 12px; border-radius:6px; font-size:12px; font-weight:600; color:#64748b; background:none; border:none; cursor:pointer; transition:all .2s; }
+        .view-toggle-btn.active { background:#ffffff; color:#4f46e5; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+
+        /* ─── Ranking Table ──────────────────────────────────── */
+        .rank-table { width:100%; border-collapse:collapse; }
+        .rank-table th { font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; padding:10px 14px; text-align:left; border-bottom:1px solid #f1f5f9; background:#fafafa; }
+        .rank-table td { padding:12px 14px; border-bottom:1px solid #f8fafc; font-size:13px; color:#1e293b; }
+        .rank-table tbody tr:hover td { background:#f8fafc; }
+
+        /* ─── Interview Slots ────────────────────────────────── */
+        .interview-slot { display:flex; align-items:center; justify-content:space-between; padding:9px 12px; border-radius:8px; background:#f8fafc; border:1px solid #e2e8f0; font-size:12px; cursor:pointer; transition:all .2s; }
+        .interview-slot:hover { background:#eef2ff; border-color:#c7d2fe; }
+        .interview-slot.selected { background:#eef2ff; border-color:#818cf8; }
+        .slot-select-btn { font-size:10px; font-weight:700; padding:3px 8px; border-radius:4px; background:#e0e7ff; color:#4338ca; border:none; cursor:pointer; pointer-events:none; }
+
+        /* ─── Live Stats ─────────────────────────────────────── */
+        .live-stat-box { text-align:center; padding:8px 14px; background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; min-width:72px; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+        .live-stat-value { font-size:22px; font-weight:800; font-family:'Plus Jakarta Sans',sans-serif; line-height:1.1; }
+        .live-stat-label { font-size:10px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:.05em; margin-top:2px; }
     </style>
 </head>
 <body>
@@ -451,18 +267,27 @@
                 </svg>
             </div>
             <div>
-                <h1 class="font-bold text-[15px] text-white leading-none" style="font-family:'Plus Jakarta Sans',sans-serif;">
+                <h1 class="font-bold text-[15px] leading-none" style="font-family:'Plus Jakarta Sans',sans-serif;color:#0f172a;">
                     AI Recruitment <span class="grad-text">Assistant</span>
                 </h1>
-                <p class="text-[11px] text-slate-500 mt-0.5">Multi-Agent Hiring Automation</p>
+                <p class="text-[11px] mt-0.5" style="color:#94a3b8;">Multi-Agent Hiring Automation</p>
             </div>
         </div>
+        <!-- Nav Links -->
+        <div style="display:flex;gap:2px;margin:0 12px;">
+            <a href="/dashboard" style="padding:5px 11px;border-radius:7px;font-size:12.5px;font-weight:500;color:#64748b;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">Dashboard</a>
+            <a href="/" style="padding:5px 11px;border-radius:7px;font-size:12.5px;font-weight:600;background:#eef2ff;color:#4f46e5;text-decoration:none;">Process</a>
+            <a href="/candidates" style="padding:5px 11px;border-radius:7px;font-size:12.5px;font-weight:500;color:#64748b;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">Candidates</a>
+            <a href="/jobs" style="padding:5px 11px;border-radius:7px;font-size:12.5px;font-weight:500;color:#64748b;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">Jobs</a>
+        </div>
+
         <div class="flex items-center gap-3">
             <div class="status-chip">
                 <span class="status-dot"></span>
                 Agents Ready
             </div>
-
+            <span style="font-size:12px;color:#64748b;padding:4px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:99px;">{{ username }}</span>
+            <a href="/logout" style="font-size:12px;color:#475569;padding:5px 11px;background:none;border:1px solid #e2e8f0;border-radius:7px;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='#fef2f2';this.style.color='#dc2626'" onmouseout="this.style.background='none';this.style.color='#475569'">Sign out</a>
         </div>
     </header>
 
@@ -474,7 +299,7 @@
             <div class="flex flex-col gap-3">
                 <div class="flex items-center gap-2.5">
                     <span class="step-badge">1</span>
-                    <span class="text-[15px] font-700 text-white" style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:700;">Job Description</span>
+                    <span class="text-[15px]" style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;color:#0f172a;">Job Description</span>
                 </div>
                 <div class="flex flex-col gap-2">
                     <textarea
@@ -493,13 +318,28 @@
                 </div>
             </div>
 
+            <!-- Job Selector -->
+            {% if jobs %}
+            <div style="display:flex;flex-direction:column;gap:5px;">
+                <label for="job_id" style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.06em;">Link to Job Pipeline (optional)</label>
+                <select id="job_id" name="job_id" style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#1e293b;background:#f8fafc;outline:none;transition:border-color .2s;font-family:'Inter',sans-serif;" onchange="prefillJD(this)">
+                    <option value="">— Select a job (or leave blank) —</option>
+                    {% for job in jobs %}
+                    <option value="{{ job.id }}" data-desc="{{ job.description | e }}">{{ job.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% else %}
+            <input type="hidden" name="job_id" value="">
+            {% endif %}
+
             <div class="divider-label">then</div>
 
             <!-- Step 2: Resume Upload -->
             <div class="flex flex-col gap-3 flex-1">
                 <div class="flex items-center gap-2.5">
                     <span class="step-badge">2</span>
-                    <span class="text-[15px] font-700 text-white" style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:700;">Candidate Resumes</span>
+                    <span class="text-[15px]" style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;color:#0f172a;">Candidate Resumes</span>
                 </div>
 
                 <label for="resumes" id="upload-zone" class="upload-zone flex flex-col items-center justify-center p-6 gap-2 flex-1 min-h-[140px]">
@@ -510,8 +350,8 @@
                             </svg>
                         </div>
                         <div>
-                            <p class="text-sm font-600 text-slate-300">Drop PDFs here or <span class="text-indigo-400">browse</span></p>
-                            <p class="text-xs text-slate-500 mt-0.5">Multiple files supported · PDF format</p>
+                            <p class="text-sm font-600" style="color:#475569;">Drop PDFs here or <span style="color:#4f46e5;font-weight:600;">browse</span></p>
+                            <p class="text-xs mt-0.5" style="color:#94a3b8;">Multiple files supported · PDF format</p>
                         </div>
                     </div>
                     <div id="file-chips" class="hidden flex-wrap justify-center gap-2 mt-1 w-full"></div>
@@ -545,17 +385,17 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
             </div>
-            <h2 class="text-xl font-bold text-white" style="font-family:'Plus Jakarta Sans',sans-serif;">Results Will Appear Here</h2>
-            <p class="text-sm text-slate-500 mt-2 max-w-xs">Complete the steps on the left — upload resumes and click <em>Process Candidates</em> to begin AI analysis.</p>
+            <h2 class="text-xl font-bold" style="font-family:'Plus Jakarta Sans',sans-serif;color:#0f172a;">Results Will Appear Here</h2>
+            <p class="text-sm mt-2 max-w-xs" style="color:#64748b;">Complete the steps on the left — upload resumes and click <em>Process Candidates</em> to begin AI analysis.</p>
             <div class="mt-8 flex flex-col gap-2 text-left max-w-xs w-full">
-                <div class="flex items-center gap-2.5 text-xs text-slate-600">
-                    <div class="w-1.5 h-1.5 rounded-full bg-indigo-500/50"></div>Resumes scored 0-100 against the JD
+                <div class="flex items-center gap-2.5 text-xs" style="color:#64748b;">
+                    <div class="w-1.5 h-1.5 rounded-full" style="background:#6366f1;opacity:0.5;"></div>Resumes scored 0-100 against the JD
                 </div>
-                <div class="flex items-center gap-2.5 text-xs text-slate-600">
-                    <div class="w-1.5 h-1.5 rounded-full bg-indigo-500/50"></div>Candidates ≥ 70% receive an invitation email
+                <div class="flex items-center gap-2.5 text-xs" style="color:#64748b;">
+                    <div class="w-1.5 h-1.5 rounded-full" style="background:#6366f1;opacity:0.5;"></div>Candidates ≥ 70% receive an invitation email
                 </div>
-                <div class="flex items-center gap-2.5 text-xs text-slate-600">
-                    <div class="w-1.5 h-1.5 rounded-full bg-indigo-500/50"></div>Others receive a polite rejection email
+                <div class="flex items-center gap-2.5 text-xs" style="color:#64748b;">
+                    <div class="w-1.5 h-1.5 rounded-full" style="background:#6366f1;opacity:0.5;"></div>Others receive a polite rejection email
                 </div>
             </div>
         </div>
@@ -564,8 +404,8 @@
         <div id="loader" class="hidden flex flex-col items-center justify-center h-full gap-6">
             <div class="loader-ring"></div>
             <div class="text-center">
-                <p id="loader-title" class="text-base font-semibold text-white" style="font-family:'Plus Jakarta Sans',sans-serif;">AI Agents At Work</p>
-                <p id="loader-text" class="text-sm text-slate-500 mt-1">Initialising pipeline…</p>
+                <p id="loader-title" class="text-base font-semibold" style="font-family:'Plus Jakarta Sans',sans-serif;color:#0f172a;">AI Agents At Work</p>
+                <p id="loader-text" class="text-sm mt-1" style="color:#64748b;">Initialising pipeline…</p>
             </div>
             <!-- Pipeline Steps -->
             <div id="pipeline-steps" class="flex flex-col gap-2 w-full max-w-xs">
@@ -577,6 +417,29 @@
                 </div>
                 <div class="pipeline-step" id="step-send">
                     <div class="step-dot"></div>Sending Communications
+                </div>
+            </div>
+            <!-- Per-file live progress -->
+            <div id="live-progress" class="w-full max-w-xs flex flex-col gap-2" style="margin-top:4px;">
+                <div id="current-file-label" style="font-size:12px;color:#64748b;text-align:center;min-height:18px;"></div>
+                <div class="progress-bar-resume">
+                    <div id="file-progress-bar" class="progress-bar-resume-fill" style="width:0%"></div>
+                </div>
+                <div id="node-status-label" style="font-size:11px;color:#475569;text-align:center;min-height:16px;"></div>
+            </div>
+            <!-- Live stats dashboard while processing -->
+            <div id="live-stats" class="flex gap-3 justify-center" style="margin-top:12px;">
+                <div class="live-stat-box">
+                    <div class="live-stat-value text-white" id="ls-processed">0</div>
+                    <div class="live-stat-label">Done</div>
+                </div>
+                <div class="live-stat-box">
+                    <div class="live-stat-value" style="color:#a5b4fc" id="ls-shortlisted">0</div>
+                    <div class="live-stat-label">Shortlisted</div>
+                </div>
+                <div class="live-stat-box">
+                    <div class="live-stat-value" style="color:#fcd34d" id="ls-rejected">0</div>
+                    <div class="live-stat-label">Rejected</div>
                 </div>
             </div>
         </div>
@@ -610,6 +473,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepScreen        = document.getElementById('step-screen');
     const stepDraft         = document.getElementById('step-draft');
     const stepSend          = document.getElementById('step-send');
+
+    /* ── Job selector → pre-fill JD ─────────────────────── */
+    function prefillJD(sel) {
+        const opt = sel.options[sel.selectedIndex];
+        const desc = opt.dataset.desc || '';
+        if (desc && !jdTextarea.value.trim()) {
+            jdTextarea.value = desc;
+        }
+    }
 
     /* ── Notifications ───────────────────────────────────── */
     function showNotification(message, isError = false) {
@@ -737,7 +609,7 @@ document.addEventListener('DOMContentLoaded', () => {
         [stepScreen, stepDraft, stepSend].forEach(s => s.className = 'pipeline-step done');
     }
 
-    /* ── Form Submission ─────────────────────────────────── */
+    /* ── Form Submission (SSE streaming) ─────────────────── */
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -755,16 +627,84 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.style.opacity = '0.7';
         startLoaderAnimation();
 
+        // Reset live progress UI
+        document.getElementById('current-file-label').textContent = '';
+        document.getElementById('file-progress-bar').style.width = '0%';
+        document.getElementById('node-status-label').textContent = '';
+        // Reset live stats
+        ['ls-processed','ls-shortlisted','ls-rejected'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.textContent = '0';
+        });
+
         const formData = new FormData(form);
+
         try {
             const res = await fetch('/process', { method: 'POST', body: formData });
             if (!res.ok) {
                 const errText = await res.text();
                 throw new Error(`Server error ${res.status}: ${errText.slice(0, 200)}`);
             }
-            const results = await res.json();
-            stopLoaderAnimation();
-            displayResults(results);
+
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            const allResults = [];
+            const nodeLog = {};  // filename -> [{node, label}]
+
+            const nodeMessages = {
+                resume_screener:    'Screening resume & scoring…',
+                invitation_drafter: 'Drafting invitation email…',
+                rejection_drafter:  'Drafting rejection email…',
+                email_sender:       'Sending email…',
+                __interrupt__:      '✓ Draft ready — awaiting your review'
+            };
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop();
+                for (const line of lines) {
+                    if (!line.startsWith('data:')) continue;
+                    const raw = line.replace(/^data:\s*/, '');
+                    if (!raw || raw === '[DONE]') continue;
+                    let evt;
+                    try { evt = JSON.parse(raw); } catch(e) { continue; }
+                    if (!evt || typeof evt.type !== 'string') continue;
+
+                    const setEl = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
+
+                    if (evt.type === 'start') {
+                        nodeLog[evt.filename] = [];
+                        setEl('current-file-label', el => el.textContent = `Processing ${evt.filename} (${evt.index + 1}/${evt.total})…`);
+                        setEl('file-progress-bar', el => el.style.width = `${(evt.index / evt.total) * 100}%`);
+                        setEl('node-status-label', el => el.textContent = 'Starting…');
+                    } else if (evt.type === 'node') {
+                        if (evt.filename && evt.node !== '__interrupt__') {
+                            if (!nodeLog[evt.filename]) nodeLog[evt.filename] = [];
+                            nodeLog[evt.filename].push({ node: evt.node, label: nodeMessages[evt.node] || evt.node });
+                        }
+                        setEl('node-status-label', el => el.textContent = nodeMessages[evt.node] || evt.node);
+                    } else if (evt.type === 'result') {
+                        if (evt.data) {
+                            evt.data._nodeLog = nodeLog[evt.data.filename] || [];
+                            allResults.push(evt.data);
+                            // Update live dashboard
+                            const goodCount = allResults.filter(r => (r.state?.screening_results?.matchScore || 0) >= 70).length;
+                            setEl('ls-processed',  el => el.textContent = allResults.length);
+                            setEl('ls-shortlisted', el => el.textContent = goodCount);
+                            setEl('ls-rejected',    el => el.textContent = allResults.length - goodCount);
+                        }
+                    } else if (evt.type === 'complete') {
+                        setEl('file-progress-bar', el => el.style.width = '100%');
+                        stopLoaderAnimation();
+                        loader.classList.add('hidden');
+                        loader.classList.remove('flex');
+                        try { displayResults(allResults); } catch(e) { console.error('displayResults error:', e); displayError(e.message); }
+                    }
+                }
+            }
         } catch (err) {
             console.error('Processing error:', err);
             stopLoaderAnimation();
@@ -774,8 +714,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             submitBtn.disabled = false;
             submitBtn.style.opacity = '';
-            loader.classList.add('hidden');
-            loader.classList.remove('flex');
         }
     });
 
@@ -783,12 +721,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function displayError(message) {
         placeholder.classList.add('hidden');
         resultsContainer.innerHTML = `
-            <div style="background:rgba(40,10,10,0.7);border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:20px;" role="alert">
+            <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:14px;padding:20px;" role="alert">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-                    <div style="width:28px;height:28px;border-radius:50%;background:rgba(239,68,68,0.2);display:flex;align-items:center;justify-content:center;color:#fca5a5;font-size:13px;">✕</div>
-                    <p style="font-weight:700;color:#fca5a5;font-size:15px;">Processing Failed</p>
+                    <div style="width:28px;height:28px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;color:#dc2626;font-size:13px;">✕</div>
+                    <p style="font-weight:700;color:#dc2626;font-size:15px;">Processing Failed</p>
                 </div>
-                <p style="font-size:13px;color:#94a3b8;margin-left:38px;">${message}</p>
+                <p style="font-size:13px;color:#64748b;margin-left:38px;">${message}</p>
             </div>`;
         resultsContainer.classList.remove('hidden');
         resultsContainer.classList.add('flex');
@@ -797,46 +735,91 @@ document.addEventListener('DOMContentLoaded', () => {
     function displayResults(results) {
         resultsContainer.innerHTML = '';
         placeholder.classList.add('hidden');
+        window.__pendingCards = [];
 
         if (!results || results.length === 0) {
             placeholder.classList.remove('hidden');
             return;
         }
 
-        // Summary bar
         const good = results.filter(r => (r.state?.screening_results?.matchScore || 0) >= 70).length;
         const poor = results.length - good;
         const avg  = Math.round(results.reduce((a, r) => a + (r.state?.screening_results?.matchScore || 0), 0) / results.length);
+        const pendingCount = results.filter(r => (r.next_step || []).includes('email_sender')).length;
 
+        // ── Summary bar ──────────────────────────────────────
         const summaryBar = document.createElement('div');
         summaryBar.className = 'summary-bar';
+        summaryBar.style.flexWrap = 'wrap';
         summaryBar.innerHTML = `
             <div class="summary-stat">
-                <div class="summary-stat-value text-white">${results.length}</div>
+                <div class="summary-stat-value" style="color:#1e293b;">${results.length}</div>
                 <div class="summary-stat-label">Processed</div>
             </div>
             <div class="summary-divider"></div>
             <div class="summary-stat">
-                <div class="summary-stat-value" style="color:#a5b4fc">${good}</div>
+                <div class="summary-stat-value" style="color:#059669;">${good}</div>
                 <div class="summary-stat-label">Shortlisted</div>
             </div>
             <div class="summary-divider"></div>
             <div class="summary-stat">
-                <div class="summary-stat-value" style="color:#fcd34d">${poor}</div>
+                <div class="summary-stat-value" style="color:#92400e;">${poor}</div>
                 <div class="summary-stat-label">Rejected</div>
             </div>
             <div class="summary-divider"></div>
             <div class="summary-stat">
-                <div class="summary-stat-value" style="background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${avg}%</div>
+                <div class="summary-stat-value" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${avg}%</div>
                 <div class="summary-stat-label">Avg Score</div>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="funnel-bar">
+                <div class="funnel-stage"><div class="funnel-stage-count">${results.length}</div><div class="funnel-stage-label">Uploaded</div></div>
+                <div class="funnel-arrow">→</div>
+                <div class="funnel-stage"><div class="funnel-stage-count">${results.length}</div><div class="funnel-stage-label">Screened</div></div>
+                <div class="funnel-arrow">→</div>
+                <div class="funnel-stage"><div class="funnel-stage-count" style="color:#059669">${good}</div><div class="funnel-stage-label">Shortlisted</div></div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;flex-wrap:wrap;">
+                <div class="view-toggle">
+                    <button class="view-toggle-btn active" id="vt-cards" onclick="switchView('cards')">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:middle;margin-right:4px;"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Cards
+                    </button>
+                    <button class="view-toggle-btn" id="vt-rank" onclick="switchView('rank')">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:middle;margin-right:4px;"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Ranking
+                    </button>
+                </div>
+                ${pendingCount > 0 ? `<button class="summary-action-btn btn-batch-send" onclick="batchSendAll()">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m22 2-7 20-4-9-9-4 20-7z"/><path d="M22 2 11 13"/></svg>
+                    Send All (${pendingCount})
+                </button>` : ''}
+                <button class="summary-action-btn btn-export" onclick="exportReport(window.__lastResults || [])">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Export CSV
+                </button>
+                ${good >= 2 ? `<button class="summary-action-btn btn-compare" onclick="openCompareModal(window.__lastResults || [])">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    Compare
+                </button>` : ''}
             </div>`;
         resultsContainer.appendChild(summaryBar);
 
-        // Cards
+        window.__lastResults = results;
+
+        // ── Cards view (default) ─────────────────────────────
+        const cardsView = document.createElement('div');
+        cardsView.id = 'view-cards';
+        cardsView.style.cssText = 'display:flex;flex-direction:column;gap:16px;';
         results.forEach((result, idx) => {
             const card = createResultCard(result, idx);
-            if (card) resultsContainer.appendChild(card);
+            if (card) cardsView.appendChild(card);
         });
+        resultsContainer.appendChild(cardsView);
+
+        // ── Ranking table view (hidden by default) ───────────
+        const rankView = buildRankingTable(results);
+        rankView.id = 'view-rank';
+        rankView.style.display = 'none';
+        resultsContainer.appendChild(rankView);
 
         resultsContainer.classList.remove('hidden');
         resultsContainer.classList.add('flex');
@@ -856,6 +839,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const candidateEmail = screening_results.candidateEmail || 'N/A';
         const matchScore     = typeof screening_results.matchScore === 'number' ? screening_results.matchScore : 0;
         const summary        = screening_results.summary || 'No summary available.';
+        const skillsMatched  = Array.isArray(screening_results.skillsMatched) ? screening_results.skillsMatched : [];
+        const skillsMissing  = Array.isArray(screening_results.skillsMissing) ? screening_results.skillsMissing : [];
         const isGood         = matchScore >= 70;
         const emailBody      = drafted_email?.body || '';
         const emailSubject   = drafted_email?.subject || '';
@@ -863,6 +848,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const nextStep       = result.next_step || [];
         const threadId       = result.thread_id;
         const isInterrupted  = nextStep.includes('email_sender');
+        const nodeLog        = result._nodeLog || [];
 
         // Status message & badge type
         let statusMsg = '', badgeClass = '';
@@ -895,19 +881,56 @@ document.addEventListener('DOMContentLoaded', () => {
         card.style.animationDelay = `${idx * 80}ms`;
 
         const cardId = `card-${idx}`;
+        const candidateId = result.candidate_id || null;
+
+        // Track pending cards for batch send (must be after cardId is declared)
+        if (isInterrupted) {
+            window.__pendingCards = window.__pendingCards || [];
+            window.__pendingCards.push({ cardId, threadId, candidateId });
+        }
+
+        // Build skills breakdown HTML
+        let skillsHtml = '';
+        if (skillsMatched.length > 0 || skillsMissing.length > 0) {
+            const matchedTags = skillsMatched.map(s =>
+                `<span class="skill-tag skill-tag-matched">${s}</span>`).join(' ');
+            const missingTags = skillsMissing.map(s =>
+                `<span class="skill-tag skill-tag-missing">${s}</span>`).join(' ');
+
+            skillsHtml = `
+                <div style="margin-top:4px;">
+                    <button type="button" class="score-reason-toggle" onclick="
+                        const b = document.getElementById('why-score-${cardId}');
+                        b.classList.toggle('hidden');
+                        this.textContent = b.classList.contains('hidden') ? '▾ Why this score?' : '▴ Hide breakdown';
+                    ">▾ Why this score?</button>
+                    <div id="why-score-${cardId}" class="score-reason-body hidden">
+                        ${skillsMatched.length > 0 ? `
+                        <div style="margin-bottom:8px;">
+                            <div style="font-size:10px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;">Skills Matched</div>
+                            <div style="display:flex;flex-wrap:wrap;gap:5px;">${matchedTags}</div>
+                        </div>` : ''}
+                        ${skillsMissing.length > 0 ? `
+                        <div>
+                            <div style="font-size:10px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;">Skills Missing</div>
+                            <div style="display:flex;flex-wrap:wrap;gap:5px;">${missingTags}</div>
+                        </div>` : ''}
+                    </div>
+                </div>`;
+        }
 
         card.innerHTML = `
             <!-- Card Header -->
             <div class="${isGood ? 'card-header-good' : 'card-header-poor'} p-5 flex items-center gap-4">
                 <!-- Avatar -->
-                <div style="width:48px;height:48px;border-radius:14px;background:${isGood ? 'rgba(79,70,229,0.3)' : 'rgba(217,119,6,0.25)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;font-weight:800;color:${isGood ? '#a5b4fc' : '#fcd34d'};font-family:'Plus Jakarta Sans',sans-serif;border:1px solid ${isGood ? 'rgba(99,102,241,0.4)' : 'rgba(245,158,11,0.35)'}">
+                <div style="width:48px;height:48px;border-radius:12px;background:${isGood ? '#eef2ff' : '#fffbeb'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;font-weight:800;color:${isGood ? '#4338ca' : '#92400e'};font-family:'Plus Jakarta Sans',sans-serif;border:1px solid ${isGood ? '#c7d2fe' : '#fde68a'}">
                     ${initials}
                 </div>
                 <!-- Name & Email -->
                 <div class="flex-1 min-w-0">
-                    <h3 style="font-size:16px;font-weight:700;color:white;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${candidateName}</h3>
+                    <h3 style="font-size:16px;font-weight:700;color:#0f172a;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${candidateName}</h3>
                     <p style="font-size:12px;color:#64748b;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${candidateEmail}</p>
-                    <p style="font-size:11px;color:#475569;margin-top:1px;">📄 ${filename}</p>
+                    <p style="font-size:11px;color:#94a3b8;margin-top:1px;">📄 ${filename}</p>
                 </div>
                 <!-- Score Arc -->
                 <div style="flex-shrink:0;position:relative;width:76px;height:76px;display:flex;align-items:center;justify-content:center;">
@@ -923,7 +946,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         />
                     </svg>
                     <div style="text-align:center;z-index:1;">
-                        <div style="font-size:18px;font-weight:800;color:${isGood ? '#a5b4fc' : '#fcd34d'};line-height:1;font-family:'Plus Jakarta Sans',sans-serif;">${matchScore}</div>
+                        <div class="score-counter" style="color:${isGood ? '#4338ca' : '#92400e'};" data-target="${matchScore}" id="score-num-${cardId}">0</div>
                         <div style="font-size:9px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">score</div>
                     </div>
                 </div>
@@ -935,25 +958,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div>
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
                         <span style="font-size:11px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Match Score</span>
-                        <span style="font-size:12px;font-weight:700;color:${isGood ? '#a5b4fc' : '#fcd34d'}">${matchScore}%</span>
+                        <span style="font-size:12px;font-weight:700;color:${isGood ? '#4338ca' : '#92400e'}">${matchScore}%</span>
                     </div>
                     <div class="score-bar-track">
                         <div class="score-bar-fill ${isGood ? 'good' : 'poor'}" style="width:0%" data-target-width="${matchScore}%" id="bar-${cardId}"></div>
                     </div>
                     <div style="display:flex;justify-content:space-between;margin-top:4px;">
-                        <span style="font-size:10px;color:#374151;">0%</span>
-                        <span style="font-size:10px;color:${isGood ? '#4f46e5' : '#92400e'};font-weight:600;">${isGood ? '✓ Above threshold' : '✗ Below threshold (70%)'}</span>
-                        <span style="font-size:10px;color:#374151;">100%</span>
+                        <span style="font-size:10px;color:#94a3b8;">0%</span>
+                        <span style="font-size:10px;color:${isGood ? '#4338ca' : '#92400e'};font-weight:600;">${isGood ? '✓ Above threshold' : '✗ Below threshold (70%)'}</span>
+                        <span style="font-size:10px;color:#94a3b8;">100%</span>
                     </div>
                 </div>
 
                 <!-- AI Summary -->
-                <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:14px;">
+                <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;">
                     <div style="font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;display:flex;align-items:center;gap:5px;">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                         AI Analysis
                     </div>
-                    <p style="font-size:13px;color:#94a3b8;line-height:1.65;">${summary}</p>
+                    <p style="font-size:13px;color:#475569;line-height:1.65;">${summary}</p>
+                    ${skillsHtml}
                 </div>
 
                 <!-- Status & Email -->
@@ -976,22 +1000,57 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${emailSubject ? `<p style="font-size:12px;color:#64748b;margin-bottom:8px;"><strong style="color:#818cf8;">Subject:</strong> ${emailSubject}</p>` : ''}
                         ${emailBody.replace(/\n/g, '<br>')}
                     </div>
-                    
+
                     ${isInterrupted ? `
                     <div class="refine-container" id="refine-ctrls-${cardId}">
-                        <p style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Refinement Box (Ask AI to change something)</p>
-                        <textarea id="refine-input-${cardId}" class="refine-textarea" placeholder="e.g. 'Make it more formal', 'Mention the 10% bonus', etc."></textarea>
-                        <div class="action-btn-group">
-                            <button type="button" class="action-btn btn-refine" onclick="refineAction('${cardId}', '${threadId}')">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                                Refine with AI
-                            </button>
-                            <button type="button" id="send-btn-${cardId}" class="action-btn btn-send" onclick="sendAction('${cardId}', '${threadId}')">
+                        ${isGood ? `
+                        <div style="margin-bottom:12px;">
+                            <p style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Suggested Interview Slots</p>
+                            <div id="slots-${cardId}" style="display:flex;flex-direction:column;gap:6px;">
+                                ${getInterviewSlots().map(s => `
+                                <div class="interview-slot" onclick="selectSlot(this, '${cardId}', '${s.label}')">
+                                    <span style="color:#94a3b8;font-size:12px;">${s.label}</span>
+                                    <span class="slot-select-btn">Pick</span>
+                                </div>`).join('')}
+                            </div>
+                            <p style="font-size:10px;color:#475569;margin-top:6px;">Click a slot to auto-fill the refinement box below.</p>
+                        </div>` : ''}
+                        <p style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Step 2 — Ask AI to refine (optional)</p>
+                        <textarea id="refine-input-${cardId}" class="refine-textarea" placeholder="e.g. 'Make it more formal', 'Add interview time as 10 AM Friday', etc."></textarea>
+                        <button type="button" class="action-btn btn-refine" style="width:100%;justify-content:center;margin-bottom:12px;" onclick="refineAction('${cardId}', '${threadId}', ${candidateId})">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            Refine with AI — updates the preview above
+                        </button>
+                        <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;">
+                            <p style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Step 3 — Approve & send</p>
+                            <button type="button" id="send-btn-${cardId}" class="action-btn btn-send" style="width:100%;justify-content:center;" onclick="sendAction('${cardId}', '${threadId}', ${candidateId})">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m22 2-7 20-4-9-9-4 20-7z"/><path d="M22 2 11 13"/></svg>
-                                Finalize & Send
+                                Approve & Send Email
                             </button>
                         </div>
                     </div>` : ''}
+                </div>` : ''}
+
+                ${nodeLog.length > 0 ? `
+                <div>
+                    <button type="button" class="score-reason-toggle" onclick="
+                        const b = document.getElementById('audit-${cardId}');
+                        b.classList.toggle('hidden');
+                        this.textContent = b.classList.contains('hidden') ? '▾ AI Processing Log' : '▴ Hide Log';
+                    ">▾ AI Processing Log</button>
+                    <div id="audit-${cardId}" class="audit-log hidden" style="margin-top:8px;">
+                        ${nodeLog.map((entry, i) => `
+                        <div class="audit-entry">
+                            <div class="audit-dot" style="background:${i === nodeLog.length-1 ? '#10b981' : '#4f46e5'}"></div>
+                            <span>${entry.label}</span>
+                            <span style="margin-left:auto;font-size:10px;color:#374151;">✓</span>
+                        </div>`).join('')}
+                        <div class="audit-entry" style="color:#6ee7b7;">
+                            <div class="audit-dot" style="background:#10b981;"></div>
+                            <span>Ready for human review</span>
+                            <span style="margin-left:auto;font-size:10px;color:#374151;">✓</span>
+                        </div>
+                    </div>
                 </div>` : ''}
             </div>`;
 
@@ -1011,13 +1070,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     /* ── Refinement & Send Actions ────────────────────────── */
-    window.refineAction = async (cardId, threadId) => {
+    window.refineAction = async (cardId, threadId, candidateId) => {
         const input = document.getElementById(`refine-input-${cardId}`);
         const instructions = input.value.trim();
         if (!instructions) { showNotification('Please enter refinement instructions.', true); return; }
 
         input.disabled = true;
-        const btn = input.nextElementSibling.querySelector('.btn-refine');
+        const btn = document.querySelector(`#refine-ctrls-${cardId} .btn-refine`);
         const originalHtml = btn.innerHTML;
         btn.innerHTML = '<div class="spinner" style="width:12px;height:12px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;animation:spin 0.7s linear infinite;"></div> Refining…';
         btn.disabled = true;
@@ -1026,7 +1085,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch('/refine_email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ thread_id: threadId, instructions })
+                body: JSON.stringify({ thread_id: threadId, instructions, candidate_id: candidateId || null })
             });
             const data = await res.json();
             if (res.ok) {
@@ -1035,18 +1094,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 const preview = emailDiv.querySelector('.email-body-preview');
                 const newBody = data.new_state.drafted_email.body;
                 const newSubject = data.new_state.drafted_email.subject;
-                
+
                 preview.innerHTML = `
-                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:4px 8px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:6px;width:fit-content;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:4px 8px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:6px;width:fit-content;">
                         <span style="width:6px;height:6px;border-radius:50%;background:#10b981;"></span>
-                        <span style="font-size:10px;font-weight:700;color:#10b981;text-transform:uppercase;letter-spacing:0.05em;">Draft Updated by AI</span>
+                        <span style="font-size:10px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:0.05em;">Draft Updated by AI — Review before sending</span>
                     </div>
-                    <p style="font-size:12px;color:#64748b;margin-bottom:8px;"><strong style="color:#818cf8;">Subject:</strong> ${newSubject}</p>
-                    ${newBody.replace(/\n/g, '<br>')}
+                    <p style="font-size:12px;color:#64748b;margin-bottom:8px;"><strong style="color:#4f46e5;">Subject:</strong> ${newSubject}</p>
+                    ${newBody}
                 `;
                 input.value = '';
-                showNotification('AI has refined the draft based on your feedback.');
-                
+
+                // Make email div visible so user can review the refined content
+                emailDiv.classList.remove('hidden');
+                emailDiv.classList.add('flex');
+                const toggleLabel = document.getElementById(`toggle-label-${cardId}`);
+                if (toggleLabel) toggleLabel.textContent = 'Hide Email';
+
+                // Scroll refined draft into view
+                preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+                showNotification('AI has refined the draft — review it below, tick the checkbox, then click Approve & Send.');
+
                 // Pulse effect to show update
                 preview.style.animation = 'none';
                 preview.offsetHeight; // trigger reflow
@@ -1064,7 +1133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.sendAction = async (cardId, threadId) => {
+    window.sendAction = async (cardId, threadId, candidateId) => {
         const btn = document.getElementById(`send-btn-${cardId}`);
         const originalHtml = btn.innerHTML;
         btn.innerHTML = '<div class="spinner" style="margin:0"></div> Sending…';
@@ -1074,7 +1143,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch('/send_email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ thread_id: threadId })
+                body: JSON.stringify({ thread_id: threadId, candidate_id: candidateId || null })
             });
             const data = await res.json();
             if (res.ok) {
@@ -1084,6 +1153,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const badge = document.getElementById(`badge-${cardId}`);
                 badge.className = 'badge badge-sent';
                 badge.innerHTML = '<span class="badge-dot"></span> Email Sent Successfully';
+                // Append delivery timestamp
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                badge.innerHTML += ` <span class="delivery-stamp">· Sent at ${timeStr}</span>`;
                 showNotification('Email has been dispatched to the candidate.');
             } else {
                 showNotification(data.error || 'Failed to send email.', true);
@@ -1097,6 +1170,202 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    /* ── Export report ───────────────────────────────────── */
+    window.exportReport = async (results) => {
+        try {
+            const res = await fetch('/export_report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ results })
+            });
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'recruitment_report.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+            showNotification('Report downloaded successfully!');
+        } catch (err) {
+            console.error(err);
+            showNotification('Failed to export report.', true);
+        }
+    };
+
+    /* ── Compare modal ───────────────────────────────────── */
+    window.openCompareModal = (results) => {
+        const shortlisted = results.filter(r =>
+            (r.state?.screening_results?.matchScore || 0) >= 70
+        );
+        if (shortlisted.length < 2) {
+            showNotification('Need at least 2 shortlisted candidates to compare.', true);
+            return;
+        }
+
+        const modal = document.createElement('div');
+        modal.className = 'compare-modal';
+        modal.id = 'compare-modal';
+
+        const cards = shortlisted.map(r => {
+            const s = r.state?.screening_results || {};
+            const matched = (s.skillsMatched || []).slice(0, 6).map(sk =>
+                `<span class="skill-tag skill-tag-matched" style="font-size:10px;">${sk}</span>`).join(' ');
+            return `
+                <div class="compare-card">
+                    <div style="font-size:18px;font-weight:800;color:#0f172a;font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:4px;">${s.candidateName || 'Unknown'}</div>
+                    <div style="font-size:12px;color:#64748b;margin-bottom:12px;">${s.candidateEmail || 'N/A'}</div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                        <div style="font-size:28px;font-weight:900;color:#4f46e5;font-family:'Plus Jakarta Sans',sans-serif;">${s.matchScore || 0}</div>
+                        <div style="font-size:11px;color:#94a3b8;">/ 100</div>
+                    </div>
+                    <div style="font-size:12px;color:#475569;line-height:1.6;margin-bottom:12px;">${s.summary || ''}</div>
+                    ${matched ? `<div>
+                        <div style="font-size:10px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;">Matched Skills</div>
+                        <div style="display:flex;flex-wrap:wrap;gap:4px;">${matched}</div>
+                    </div>` : ''}
+                    <div style="margin-top:8px;font-size:11px;color:#475569;">📄 ${r.filename || ''}</div>
+                </div>`;
+        }).join('');
+
+        modal.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <h2 style="font-size:20px;font-weight:800;color:#0f172a;font-family:'Plus Jakarta Sans',sans-serif;">
+                    Shortlisted Candidate Comparison
+                </h2>
+                <button onclick="closeCompareModal()" style="background:#f1f5f9;border:1px solid #e2e8f0;color:#475569;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;">
+                    ✕ Close
+                </button>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:16px;">
+                ${cards}
+            </div>`;
+
+        document.body.appendChild(modal);
+    };
+
+    window.closeCompareModal = () => {
+        const m = document.getElementById('compare-modal');
+        if (m) m.remove();
+    };
+
+    /* ── View Toggle ─────────────────────────────────────── */
+    window.switchView = (view) => {
+        const cardsView = document.getElementById('view-cards');
+        const rankView  = document.getElementById('view-rank');
+        const btnCards  = document.getElementById('vt-cards');
+        const btnRank   = document.getElementById('vt-rank');
+        if (!cardsView || !rankView) return;
+        if (view === 'cards') {
+            cardsView.style.display = 'flex';
+            rankView.style.display  = 'none';
+            btnCards?.classList.add('active');
+            btnRank?.classList.remove('active');
+        } else {
+            cardsView.style.display = 'none';
+            rankView.style.display  = 'block';
+            btnRank?.classList.add('active');
+            btnCards?.classList.remove('active');
+        }
+    };
+
+    /* ── Ranking Table Builder ───────────────────────────── */
+    function buildRankingTable(results) {
+        const sorted = [...results].sort((a, b) =>
+            (b.state?.screening_results?.matchScore || 0) - (a.state?.screening_results?.matchScore || 0)
+        );
+        const wrap = document.createElement('div');
+        wrap.innerHTML = `
+            <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+                <table class="rank-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Candidate</th>
+                            <th style="min-width:160px;">Score</th>
+                            <th>Decision</th>
+                            <th>File</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sorted.map((r, i) => {
+                            const s = r.state?.screening_results || {};
+                            const score = s.matchScore || 0;
+                            const isGood = score >= 70;
+                            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `<span style="color:#475569;font-size:12px;font-weight:700;">#${i+1}</span>`;
+                            return `<tr>
+                                <td style="font-size:18px;">${medal}</td>
+                                <td>
+                                    <div style="font-weight:600;color:#0f172a;font-size:14px;">${s.candidateName || 'Unknown'}</div>
+                                    <div style="font-size:11px;color:#475569;margin-top:2px;">${s.candidateEmail || 'N/A'}</div>
+                                </td>
+                                <td>
+                                    <div style="display:flex;align-items:center;gap:10px;">
+                                        <span style="font-size:20px;font-weight:800;color:${isGood ? '#a5b4fc' : '#fcd34d'};font-family:'Plus Jakarta Sans',sans-serif;min-width:32px;">${score}</span>
+                                        <div style="flex:1;">
+                                            <div class="score-bar-track"><div class="score-bar-fill ${isGood ? 'good' : 'poor'}" style="width:${score}%"></div></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="badge ${isGood ? 'badge-good' : 'badge-poor'}"><span class="badge-dot"></span>${isGood ? 'Shortlisted' : 'Rejected'}</span></td>
+                                <td style="font-size:11px;color:#475569;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.filename || ''}</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>`;
+        return wrap;
+    }
+
+    /* ── Batch Send All ──────────────────────────────────── */
+    window.batchSendAll = async () => {
+        const pending = window.__pendingCards || [];
+        if (pending.length === 0) { showNotification('No pending candidates to send.', true); return; }
+        showNotification(`Sending ${pending.length} email(s) — please wait…`);
+        const toSend = [...pending];
+        window.__pendingCards = [];
+        for (const { cardId, threadId, candidateId } of toSend) {
+            await window.sendAction(cardId, threadId, candidateId);
+        }
+        showNotification(`All ${toSend.length} email(s) dispatched!`);
+    };
+
+    /* ── Interview Slots ─────────────────────────────────── */
+    function getInterviewSlots() {
+        const slots = [];
+        const times = ['10:00 AM', '2:00 PM', '4:30 PM'];
+        let d = new Date();
+        let added = 0;
+        while (added < 3) {
+            d.setDate(d.getDate() + 1);
+            const day = d.getDay();
+            if (day >= 1 && day <= 5) {
+                const label = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) + ' · ' + times[added];
+                slots.push({ label });
+                added++;
+            }
+        }
+        return slots;
+    }
+
+    window.selectSlot = (el, cardId, slotLabel) => {
+        el.closest(`#slots-${cardId}`)?.querySelectorAll('.interview-slot').forEach(s => s.classList.remove('selected'));
+        el.classList.add('selected');
+        const inp = document.getElementById(`refine-input-${cardId}`);
+        if (inp) { inp.value = `Please mention the interview slot in the email: ${slotLabel}`; inp.focus(); }
+    };
+
+    /* ── Score count-up animation ─────────────────────────── */
+    function animateScoreCounter(el, target, duration) {
+        const start = performance.now();
+        function step(now) {
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            // ease-out cubic
+            const eased = 1 - Math.pow(1 - progress, 3);
+            el.textContent = Math.round(eased * target);
+            if (progress < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+    }
 
     /* ── Animate Scores After Render ─────────────────────── */
     const observer = new MutationObserver(() => {
@@ -1112,6 +1381,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const target = bar.dataset.targetWidth;
             if (target && bar.style.width !== target) {
                 requestAnimationFrame(() => { bar.style.width = target; });
+            }
+        });
+        // Animate score counter
+        document.querySelectorAll('[id^="score-num-"]').forEach(numEl => {
+            const target = parseInt(numEl.dataset.target, 10);
+            if (!isNaN(target) && numEl.dataset.animated !== '1') {
+                numEl.dataset.animated = '1';
+                animateScoreCounter(numEl, target, 1200);
             }
         });
     });

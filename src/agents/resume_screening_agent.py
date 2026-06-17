@@ -8,7 +8,7 @@ def screen_resume_node(state) -> dict:
     print("---NODE: SCREENING RESUME (STRICT JSON MODE)---")
 
     llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0)
-    
+
     resume_text = state["resume_content"]
     job_description_text = state["job_description"]
 
@@ -17,15 +17,18 @@ def screen_resume_node(state) -> dict:
 
     **CRITICAL INSTRUCTIONS:**
     1.  **Analyze Content:** Extract the candidate's full name, their email address, calculate a "matchScore" (0-100), and write a 2-3 sentence "summary".
-    2.  **JSON FORMATTING IS MANDATORY:** You MUST return ONLY a single, valid JSON object.
-    3.  **USE DOUBLE QUOTES:** All keys and all string values in the JSON object MUST be enclosed in double quotes (").
+    2.  **Skills Breakdown:** Identify "skillsMatched" (array of strings — specific skills or technologies from the Job Description that the candidate clearly demonstrates) and "skillsMissing" (array of strings — key skills or technologies listed in the Job Description that the candidate appears to lack).
+    3.  **JSON FORMATTING IS MANDATORY:** You MUST return ONLY a single, valid JSON object.
+    4.  **USE DOUBLE QUOTES:** All keys and all string values in the JSON object MUST be enclosed in double quotes (").
 
     **EXAMPLE OF A PERFECT OUTPUT:**
     {{
         "candidateName": "Sanjay Kumar",
         "candidateEmail": "sanjay.k@example.com",
         "matchScore": 85,
-        "summary": "Sanjay Kumar is a strong candidate with 5 years of Python experience, aligning well with the job requirements. His skills in AWS and Django are particularly relevant."
+        "summary": "Sanjay Kumar is a strong candidate with 5 years of Python experience, aligning well with the job requirements. His skills in AWS and Django are particularly relevant.",
+        "skillsMatched": ["Python", "AWS", "Django", "REST APIs"],
+        "skillsMissing": ["Kubernetes", "GraphQL"]
     }}
 
     **Job Description:**
@@ -57,7 +60,19 @@ def screen_resume_node(state) -> dict:
 
     if not results:
         print("ERROR: AI failed to produce valid JSON.")
-        results = { "candidateName": "Error", "candidateEmail": "N/A", "matchScore": 0, "summary": "Critical error: The AI model failed to generate valid structured data." }
-        
-    return {"screening_results": results}
+        results = {
+            "candidateName": "Error",
+            "candidateEmail": "N/A",
+            "matchScore": 0,
+            "summary": "Critical error: The AI model failed to generate valid structured data.",
+            "skillsMatched": [],
+            "skillsMissing": []
+        }
 
+    # Ensure skillsMatched and skillsMissing keys always exist
+    if "skillsMatched" not in results:
+        results["skillsMatched"] = []
+    if "skillsMissing" not in results:
+        results["skillsMissing"] = []
+
+    return {"screening_results": results}

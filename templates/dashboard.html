@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — AI Recruitment</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<style>
+    body{font-family:'Inter',sans-serif;background:#f0f2f7;color:#1e293b;}
+    .nav{background:#fff;border-bottom:1px solid #e2e8f0;height:56px;display:flex;align-items:center;padding:0 24px;gap:24px;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
+    .nav-logo{display:flex;align-items:center;gap:8px;text-decoration:none;}
+    .nav-icon{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#4f46e5,#7c3aed);display:flex;align-items:center;justify-content:center;}
+    .nav-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:14px;color:#0f172a;}
+    .nav-links{display:flex;gap:2px;flex:1;margin-left:16px;}
+    .nav-link{padding:6px 12px;border-radius:7px;font-size:13px;font-weight:500;color:#64748b;text-decoration:none;transition:all .2s;}
+    .nav-link:hover{background:#f1f5f9;color:#1e293b;}
+    .nav-link.active{background:#eef2ff;color:#4f46e5;font-weight:600;}
+    .nav-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+    .user-badge{font-size:12px;color:#64748b;padding:4px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:99px;}
+    .logout-btn{font-size:12px;color:#475569;padding:5px 12px;background:none;border:1px solid #e2e8f0;border-radius:7px;cursor:pointer;text-decoration:none;transition:all .2s;}
+    .logout-btn:hover{background:#fef2f2;border-color:#fecaca;color:#dc2626;}
+    .card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:20px;}
+    .stat-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;}
+    .stat-value{font-family:'Plus Jakarta Sans',sans-serif;font-size:32px;font-weight:800;line-height:1;}
+    .stat-label{font-size:12px;color:#64748b;font-weight:500;margin-top:4px;text-transform:uppercase;letter-spacing:.05em;}
+    .stat-sub{font-size:11px;color:#94a3b8;margin-top:6px;}
+    .section-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;color:#0f172a;margin-bottom:14px;}
+    .audit-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9;}
+    .audit-row:last-child{border-bottom:none;}
+    .audit-dot{width:7px;height:7px;border-radius:50%;background:#6366f1;flex-shrink:0;margin-top:5px;}
+    .audit-action{font-size:13px;font-weight:600;color:#1e293b;}
+    .audit-meta{font-size:11px;color:#94a3b8;margin-top:2px;}
+    .badge-sl{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;}
+    .badge-rj{background:#fffbeb;color:#92400e;border:1px solid #fde68a;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;}
+    .progress-wrap{background:#f1f5f9;border-radius:99px;height:6px;overflow:hidden;}
+    .progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#4f46e5,#818cf8);}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="nav">
+    <a href="/" class="nav-logo">
+        <div class="nav-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <span class="nav-title">AI Recruitment</span>
+    </a>
+    <div class="nav-links">
+        <a href="/dashboard" class="nav-link active">Dashboard</a>
+        <a href="/" class="nav-link">Process</a>
+        <a href="/candidates" class="nav-link">Candidates</a>
+        <a href="/jobs" class="nav-link">Jobs</a>
+    </div>
+    <div class="nav-right">
+        <span class="user-badge">{{ username }}</span>
+        <a href="/logout" class="logout-btn">Sign out</a>
+    </div>
+</nav>
+
+<div class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- Page header -->
+    <div class="mb-8">
+        <h1 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:24px;font-weight:800;color:#0f172a;">Analytics Dashboard</h1>
+        <p style="color:#64748b;font-size:14px;margin-top:4px;">Hiring pipeline overview across all active roles.</p>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        <div class="stat-card" style="border-top:3px solid #6366f1;">
+            <div class="stat-value" style="color:#4f46e5;">{{ stats.total }}</div>
+            <div class="stat-label">Total Screened</div>
+        </div>
+        <div class="stat-card" style="border-top:3px solid #10b981;">
+            <div class="stat-value" style="color:#059669;">{{ stats.shortlisted }}</div>
+            <div class="stat-label">Shortlisted</div>
+            <div class="stat-sub">{{ stats.shortlist_rate }}% rate</div>
+        </div>
+        <div class="stat-card" style="border-top:3px solid #f59e0b;">
+            <div class="stat-value" style="color:#92400e;">{{ stats.rejected }}</div>
+            <div class="stat-label">Rejected</div>
+        </div>
+        <div class="stat-card" style="border-top:3px solid #6366f1;">
+            <div class="stat-value" style="color:#4f46e5;">{{ stats.emailed }}</div>
+            <div class="stat-label">Emails Sent</div>
+        </div>
+        <div class="stat-card" style="border-top:3px solid #818cf8;">
+            <div class="stat-value" style="color:#4338ca;">{{ stats.avg_score }}</div>
+            <div class="stat-label">Avg Score</div>
+        </div>
+        <div class="stat-card" style="border-top:3px solid #34d399;">
+            <div class="stat-value" style="color:#059669;">{{ stats.active_jobs }}</div>
+            <div class="stat-label">Active Jobs</div>
+        </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+        <!-- Applications over time -->
+        <div class="card lg:col-span-2">
+            <div class="section-title">Applications (Last 30 Days)</div>
+            <canvas id="chartDaily" height="100"></canvas>
+        </div>
+
+        <!-- Score distribution donut -->
+        <div class="card">
+            <div class="section-title">Score Distribution</div>
+            <canvas id="chartDist" height="180"></canvas>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;">
+                <span style="font-size:11px;color:#64748b;">🔴 &lt;40: {{ stats.score_distribution.low }}</span>
+                <span style="font-size:11px;color:#64748b;">🟡 40–69: {{ stats.score_distribution.mid }}</span>
+                <span style="font-size:11px;color:#64748b;">🟢 70–84: {{ stats.score_distribution.good }}</span>
+                <span style="font-size:11px;color:#64748b;">⭐ 85+: {{ stats.score_distribution.excellent }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Top jobs table -->
+        <div class="card">
+            <div class="section-title">Top Roles by Volume</div>
+            {% if stats.top_jobs %}
+            <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;padding:8px 0;border-bottom:1px solid #f1f5f9;">Role</th>
+                        <th style="text-align:right;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;padding:8px 0;border-bottom:1px solid #f1f5f9;">Candidates</th>
+                        <th style="text-align:right;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;padding:8px 0;border-bottom:1px solid #f1f5f9;">Avg Score</th>
+                        <th style="text-align:right;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;padding:8px 0;border-bottom:1px solid #f1f5f9;">Shortlisted</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in stats.top_jobs %}
+                    <tr>
+                        <td style="padding:10px 0;font-size:13px;font-weight:600;color:#1e293b;border-bottom:1px solid #f8fafc;">{{ job.title }}</td>
+                        <td style="padding:10px 0;font-size:13px;text-align:right;border-bottom:1px solid #f8fafc;color:#475569;">{{ job.count }}</td>
+                        <td style="padding:10px 0;font-size:13px;text-align:right;border-bottom:1px solid #f8fafc;color:#475569;">{{ job.avg_score }}%</td>
+                        <td style="padding:10px 0;text-align:right;border-bottom:1px solid #f8fafc;">
+                            <span class="badge-sl">{{ job.shortlisted }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="color:#94a3b8;font-size:13px;">No data yet. Process some resumes to see job analytics.</p>
+            {% endif %}
+        </div>
+
+        <!-- Audit log -->
+        <div class="card">
+            <div class="section-title">Recent Activity</div>
+            {% if audit %}
+            <div>
+                {% for entry in audit %}
+                <div class="audit-row">
+                    <div class="audit-dot"></div>
+                    <div>
+                        <div class="audit-action">{{ entry.action_label }}</div>
+                        <div class="audit-meta">
+                            {% if entry.candidate_name %}{{ entry.candidate_name }}{% endif %}
+                            {% if entry.job_title %} · {{ entry.job_title }}{% endif %}
+                            {% if entry.details %} · {{ entry.details[:60] }}{% endif %}
+                            <span style="margin-left:6px;">{{ entry.created_at[:16] }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="color:#94a3b8;font-size:13px;">No activity logged yet.</p>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+
+<script>
+const daily = {{ stats.daily_applications | tojson }};
+const dist  = {{ stats.score_distribution | tojson }};
+
+// Applications over time
+const dailyCtx = document.getElementById('chartDaily').getContext('2d');
+new Chart(dailyCtx, {
+    type: 'bar',
+    data: {
+        labels: daily.length ? daily.map(d => d.day) : ['No data'],
+        datasets: [{
+            label: 'Applications',
+            data: daily.length ? daily.map(d => d.count) : [0],
+            backgroundColor: 'rgba(99,102,241,0.15)',
+            borderColor: '#6366f1',
+            borderWidth: 2,
+            borderRadius: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f1f5f9' } },
+            x: { grid: { display: false } }
+        }
+    }
+});
+
+// Score distribution donut
+const distCtx = document.getElementById('chartDist').getContext('2d');
+new Chart(distCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['< 40 (Weak)', '40–69 (Fair)', '70–84 (Good)', '85+ (Excellent)'],
+        datasets: [{
+            data: [dist.low, dist.mid, dist.good, dist.excellent],
+            backgroundColor: ['#fecaca', '#fde68a', '#a7f3d0', '#6366f1'],
+            borderColor: ['#fff','#fff','#fff','#fff'],
+            borderWidth: 3
+        }]
+    },
+    options: {
+        responsive: true,
+        cutout: '65%',
+        plugins: {
+            legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } }
+        }
+    }
+});
+</script>
+</body>
+</html>

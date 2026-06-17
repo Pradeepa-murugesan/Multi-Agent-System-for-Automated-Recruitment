@@ -13,7 +13,7 @@ itsdangerous
 jinja2
 MarkupSafe
 
-# ── Environment ───────────────────────────────────────────────
+# ── Environment ───────    ────────────────────────────────────────
 python-dotenv
 
 # ── LangChain Stack (pinned to compatible set) ────────────────
@@ -56,7 +56,6 @@ pydantic-core
 annotated-types
 typing-extensions
 typing-inspect
-typing-inspection
 mypy-extensions
 
 # ── Serialization ─────────────────────────────────────────────
@@ -82,6 +81,10 @@ greenlet
 # ── Tokenisation ──────────────────────────────────────────────
 tiktoken
 regex
+
+# ── Auth (JWT) ─────────────────────────────────────────────────
+# Password hashing uses werkzeug.security (already a Flask dependency)
+python-jose[cryptography]
 
 # ── Utilities ─────────────────────────────────────────────────
 colorama

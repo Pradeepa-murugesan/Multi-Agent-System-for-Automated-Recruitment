@@ -16,6 +16,10 @@ def draft_rejection_node(state):
     """
     print("---NODE: DRAFTING REJECTION EMAIL---")
 
+    screening_results = state.get("screening_results", {})
+    job_description = state.get("job_description", "")
+    candidate_name = screening_results.get("candidateName", "Candidate")
+
     instructions = state.get("refinement_instructions", "")
     current_draft = state.get("drafted_email", {})
 
