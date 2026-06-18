@@ -2,6 +2,7 @@ import sqlite3
 import json
 import os
 from datetime import datetime
+from werkzeug.security import generate_password_hash
 
 DB_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
@@ -12,6 +13,7 @@ def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA journal_mode=WAL")   # safe concurrent writes from parallel workers
     return conn
 
 def init_db():
@@ -55,11 +57,48 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
 
+    c.execute('''CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL UNIQUE,
+        email TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+
+    # Additive migrations — safe on existing DBs (fails silently if column exists)
+    for migration in [
+        "ALTER TABLE candidates ADD COLUMN skills_matrix       TEXT      DEFAULT '{}'",
+        "ALTER TABLE candidates ADD COLUMN interview_questions TEXT      DEFAULT '[]'",
+        "ALTER TABLE candidates ADD COLUMN bias_flags          TEXT      DEFAULT '[]'",
+        "ALTER TABLE candidates ADD COLUMN bias_score          INTEGER   DEFAULT 0",
+        "ALTER TABLE candidates ADD COLUMN career_analysis     TEXT      DEFAULT '{}'",
+        "ALTER TABLE candidates ADD COLUMN score_variance      INTEGER   DEFAULT 0",
+        "ALTER TABLE candidates ADD COLUMN followup_sent_at    TIMESTAMP",
+        "ALTER TABLE candidates ADD COLUMN github_analysis     TEXT      DEFAULT '{}'",
+    ]:
+        try:
+            c.execute(migration)
+            conn.commit()
+        except Exception:
+            pass
+
     c.execute("SELECT COUNT(*) FROM jobs")
     if c.fetchone()[0] == 0:
         c.execute(
             "INSERT INTO jobs (title, description, status) VALUES (?, ?, ?)",
             ('General Applications', 'Default pool for general applications.', 'active')
+        )
+
+    # Seed admin user from env on first run
+    admin_user  = os.getenv('ADMIN_USERNAME', 'admin')
+    admin_pass  = os.getenv('ADMIN_PASSWORD', 'admin123')
+    admin_email = os.getenv('ADMIN_EMAIL', 'admin@recruitment.local')
+    c.execute("SELECT COUNT(*) FROM users")
+    if c.fetchone()[0] == 0:
+        c.execute(
+            'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
+            (admin_user, admin_email,
+             generate_password_hash(admin_pass, method='pbkdf2:sha256', salt_length=16))
         )
 
     conn.commit()
@@ -119,8 +158,10 @@ def save_candidate(data):
     c = conn.cursor()
     c.execute('''INSERT OR REPLACE INTO candidates
         (name, email, filename, job_id, match_score, decision, summary,
-         skills_matched, skills_missing, email_subject, email_body, thread_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+         skills_matched, skills_missing, email_subject, email_body, thread_id,
+         skills_matrix, interview_questions, bias_flags, bias_score,
+         career_analysis, score_variance, github_analysis)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
         (
             data.get('name'),
             data.get('email'),
@@ -133,7 +174,14 @@ def save_candidate(data):
             json.dumps(data.get('skills_missing', [])),
             data.get('email_subject'),
             data.get('email_body'),
-            data.get('thread_id')
+            data.get('thread_id'),
+            json.dumps(data.get('skills_matrix', {})),
+            json.dumps(data.get('interview_questions', [])),
+            json.dumps(data.get('bias_flags', [])),
+            data.get('bias_score', 0),
+            json.dumps(data.get('career_analysis', {})),
+            data.get('score_variance', 0),
+            json.dumps(data.get('github_analysis', {})),
         )
     )
     candidate_id = c.lastrowid
@@ -181,8 +229,7 @@ def get_candidates(job_id=None, decision=None, search=None, limit=200, offset=0)
     result = []
     for row in rows:
         d = dict(row)
-        d['skills_matched'] = json.loads(d.get('skills_matched') or '[]')
-        d['skills_missing'] = json.loads(d.get('skills_missing') or '[]')
+        _parse_candidate_json_fields(d)
         result.append(d)
     return result
 
@@ -196,9 +243,18 @@ def get_candidate(candidate_id):
     if not row:
         return None
     d = dict(row)
-    d['skills_matched'] = json.loads(d.get('skills_matched') or '[]')
-    d['skills_missing'] = json.loads(d.get('skills_missing') or '[]')
+    _parse_candidate_json_fields(d)
     return d
+
+def _parse_candidate_json_fields(d: dict) -> None:
+    """In-place JSON deserialization of candidate blob columns."""
+    d['skills_matched']       = json.loads(d.get('skills_matched')       or '[]')
+    d['skills_missing']       = json.loads(d.get('skills_missing')       or '[]')
+    d['skills_matrix']        = json.loads(d.get('skills_matrix')        or '{}')
+    d['interview_questions']  = json.loads(d.get('interview_questions')  or '[]')
+    d['bias_flags']           = json.loads(d.get('bias_flags')           or '[]')
+    d['career_analysis']      = json.loads(d.get('career_analysis')      or '{}')
+    d['github_analysis']      = json.loads(d.get('github_analysis')      or '{}')
 
 def get_stats(job_id=None):
     conn = get_db()
@@ -292,3 +348,79 @@ def get_audit_log(limit=50, job_id=None):
         d['action_label'] = ACTION_LABELS.get(d['action'], d['action'])
         result.append(d)
     return result
+
+# ─── Users ────────────────────────────────────────────────────────────────────
+
+def get_user_by_username(username: str):
+    conn = get_db()
+    row = conn.execute('SELECT * FROM users WHERE username=?', (username,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def get_user_by_email(email: str):
+    conn = get_db()
+    row = conn.execute('SELECT * FROM users WHERE email=?', (email,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def create_user(username: str, email: str, password_hash: str) -> int:
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(
+        'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
+        (username, email, password_hash)
+    )
+    user_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return user_id
+
+def username_exists(username: str) -> bool:
+    conn = get_db()
+    count = conn.execute('SELECT COUNT(*) FROM users WHERE username=?', (username,)).fetchone()[0]
+    conn.close()
+    return count > 0
+
+def email_exists(email: str) -> bool:
+    conn = get_db()
+    count = conn.execute('SELECT COUNT(*) FROM users WHERE email=?', (email,)).fetchone()[0]
+    conn.close()
+    return count > 0
+
+# ─── Follow-up ────────────────────────────────────────────────────────────────
+
+def get_followup_pending(days: int = 3) -> list:
+    """
+    Returns shortlisted candidates who:
+    - had an invitation email sent ≥ days ago
+    - have not yet received a follow-up (followup_sent_at IS NULL)
+    """
+    conn = get_db()
+    rows = conn.execute(
+        """SELECT c.*, j.title as job_title
+           FROM candidates c
+           LEFT JOIN jobs j ON c.job_id = j.id
+           WHERE c.decision = 'shortlisted'
+             AND c.email_status = 'sent'
+             AND c.followup_sent_at IS NULL
+             AND c.email_sent_at IS NOT NULL
+             AND julianday('now') - julianday(c.email_sent_at) >= ?
+           ORDER BY c.email_sent_at ASC""",
+        (days,)
+    ).fetchall()
+    conn.close()
+    result = []
+    for r in rows:
+        d = dict(r)
+        _parse_candidate_json_fields(d)
+        result.append(d)
+    return result
+
+def mark_followup_sent(candidate_id: int) -> None:
+    conn = get_db()
+    conn.execute(
+        "UPDATE candidates SET followup_sent_at=? WHERE id=?",
+        (datetime.now().isoformat(), candidate_id)
+    )
+    conn.commit()
+    conn.close()

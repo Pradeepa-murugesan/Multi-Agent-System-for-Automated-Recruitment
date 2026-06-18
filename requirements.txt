@@ -82,9 +82,19 @@ greenlet
 tiktoken
 regex
 
-# ── Auth (JWT) ─────────────────────────────────────────────────
+# ── Auth (JWT + rate limiting) ─────────────────────────────────
 # Password hashing uses werkzeug.security (already a Flask dependency)
 python-jose[cryptography]
+flask-limiter
+
+# ── LangGraph checkpoint persistence ──────────────────────────
+langgraph-checkpoint-sqlite
+
+# ── Background scheduling (automated follow-ups) ──────────────
+apscheduler
+
+# ── PDF report generation ──────────────────────────────────────
+fpdf2
 
 # ── Utilities ─────────────────────────────────────────────────
 colorama

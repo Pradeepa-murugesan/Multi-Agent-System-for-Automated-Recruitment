@@ -309,11 +309,19 @@
                         class="jd-textarea"
                         placeholder="Paste a full job description here — or type quick notes like 'Python dev, 5 yrs exp, AWS, Flask' and click ✨ Generate with AI below."
                     ></textarea>
-                    <div class="flex justify-end">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
                         <button type="button" id="generate-jd-btn" class="ai-btn">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                             Generate with AI
                         </button>
+                        <button type="button" id="optimize-jd-btn" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;transition:all .2s;" onclick="runJdOptimizer()">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+                            Analyze JD
+                        </button>
+                    </div>
+                    <!-- JD Optimizer Results Panel -->
+                    <div id="jd-optimizer-panel" style="display:none;margin-top:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;">
+                        <div id="jd-optimizer-content" style="padding:12px 14px;"></div>
                     </div>
                 </div>
             </div>
@@ -585,6 +593,68 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    /* ── JD Optimizer ───────────────────────────────────── */
+    window.runJdOptimizer = async () => {
+        const jd = jdTextarea.value.trim();
+        if (!jd) { showNotification('Please enter or paste a job description first.', true); return; }
+
+        const btn   = document.getElementById('optimize-jd-btn');
+        const panel = document.getElementById('jd-optimizer-panel');
+        const cont  = document.getElementById('jd-optimizer-content');
+
+        btn.innerHTML  = '<div class="spinner"></div> Analyzing…';
+        btn.disabled   = true;
+        panel.style.display = 'block';
+        cont.innerHTML = '<div style="text-align:center;padding:12px;color:#94a3b8;font-size:12px;">Analysing job description…</div>';
+
+        try {
+            const res  = await fetch('/optimize_jd', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ job_description: jd })
+            });
+            const data = await res.json();
+
+            if (!res.ok) { showNotification(data.error || 'Optimization failed.', true); panel.style.display='none'; return; }
+
+            const score     = data.quality_score || 0;
+            const issues    = data.issues || [];
+            const sugg      = data.suggestions || [];
+            const strengths = data.strength_highlights || [];
+            const scoreColor = score >= 70 ? '#059669' : score >= 50 ? '#d97706' : '#dc2626';
+            const sevIcons   = { error: '✕', warning: '⚠', info: 'ℹ' };
+            const sevColors  = { error: '#dc2626', warning: '#d97706', info: '#4338ca' };
+
+            cont.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
+                    <div style="font-size:12px;font-weight:700;color:#0f172a;">JD Quality Analysis</div>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <span style="font-size:18px;font-weight:800;color:${scoreColor};">${score}</span>
+                        <span style="font-size:11px;color:#94a3b8;">/100</span>
+                        <button onclick="document.getElementById('jd-optimizer-panel').style.display='none'" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:14px;padding:0 4px;">✕</button>
+                    </div>
+                </div>
+                ${data.summary ? `<p style="font-size:12px;color:#475569;margin-bottom:10px;line-height:1.55;">${data.summary}</p>` : ''}
+                ${issues.length > 0 ? `
+                <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">
+                    ${issues.map(issue => `
+                    <div style="padding:7px 10px;border-radius:7px;background:${sevColors[issue.severity]||'#64748b'}0d;border-left:3px solid ${sevColors[issue.severity]||'#64748b'};">
+                        <div style="font-size:11px;font-weight:700;color:${sevColors[issue.severity]||'#64748b'};margin-bottom:2px;">${sevIcons[issue.severity]||'•'} ${issue.text}</div>
+                        ${issue.suggestion ? `<div style="font-size:11px;color:#475569;">${issue.suggestion}</div>` : ''}
+                    </div>`).join('')}
+                </div>` : '<div style="font-size:12px;color:#059669;margin-bottom:8px;">✓ No major issues found</div>'}
+                ${strengths.length > 0 ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;">${strengths.map(s=>`<span style="font-size:11px;background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;border-radius:4px;padding:1px 6px;">✓ ${s}</span>`).join('')}</div>` : ''}
+                ${sugg.length > 0 ? `<div style="margin-top:6px;"><div style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Suggestions</div>${sugg.map(s=>`<div style="font-size:11px;color:#64748b;padding:2px 0;">• ${s}</div>`).join('')}</div>` : ''}
+            `;
+        } catch (err) {
+            showNotification('JD analysis failed: ' + err.message, true);
+            panel.style.display = 'none';
+        } finally {
+            btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg> Analyze JD`;
+            btn.disabled = false;
+        }
+    };
+
     /* ── Pipeline Loader Animation ───────────────────────── */
     let pipelineInterval = null;
     function startLoaderAnimation() {
@@ -696,6 +766,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             setEl('ls-shortlisted', el => el.textContent = goodCount);
                             setEl('ls-rejected',    el => el.textContent = allResults.length - goodCount);
                         }
+                    } else if (evt.type === 'ranking_start') {
+                        // Ranking is computing — show a subtle indicator
+                        setEl('file-progress-bar', el => el.style.width = '95%');
+                    } else if (evt.type === 'batch_ranking') {
+                        window.__batchRanking = evt.data;
+                    } else if (evt.type === 'talent_intelligence') {
+                        window.__talentIntelligence = evt.data;
                     } else if (evt.type === 'complete') {
                         setEl('file-progress-bar', el => el.style.width = '100%');
                         stopLoaderAnimation();
@@ -742,10 +819,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const good = results.filter(r => (r.state?.screening_results?.matchScore || 0) >= 70).length;
-        const poor = results.length - good;
-        const avg  = Math.round(results.reduce((a, r) => a + (r.state?.screening_results?.matchScore || 0), 0) / results.length);
-        const pendingCount = results.filter(r => (r.next_step || []).includes('email_sender')).length;
+        const good        = results.filter(r => (r.state?.screening_results?.matchScore || 0) >= 70).length;
+        const poor        = results.length - good;
+        const avg         = Math.round(results.reduce((a, r) => a + (r.state?.screening_results?.matchScore || 0), 0) / results.length);
+        const pendingCount = results.filter(r => !r.auto_sent && (r.next_step || []).includes('email_sender')).length;
+        const autoSentCount = results.filter(r => r.auto_sent === true).length;
 
         // ── Summary bar ──────────────────────────────────────
         const summaryBar = document.createElement('div');
@@ -788,6 +866,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:middle;margin-right:4px;"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Ranking
                     </button>
                 </div>
+                ${autoSentCount > 0 ? `<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;border-radius:7px;font-size:11px;font-weight:700;"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>Agentic: ${autoSentCount} auto-sent</span>` : ''}
                 ${pendingCount > 0 ? `<button class="summary-action-btn btn-batch-send" onclick="batchSendAll()">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m22 2-7 20-4-9-9-4 20-7z"/><path d="M22 2 11 13"/></svg>
                     Send All (${pendingCount})
@@ -821,6 +900,20 @@ document.addEventListener('DOMContentLoaded', () => {
         rankView.style.display = 'none';
         resultsContainer.appendChild(rankView);
 
+        // ── AI Ranking Report (shown only when batch_ranking event received) ─
+        if (window.__batchRanking) {
+            const rankReport = buildRankingReport(window.__batchRanking);
+            resultsContainer.appendChild(rankReport);
+            window.__batchRanking = null;
+        }
+
+        // ── Talent Intelligence Report ────────────────────────────────────────
+        if (window.__talentIntelligence) {
+            const tiPanel = buildTalentIntelligencePanel(window.__talentIntelligence, results.length);
+            resultsContainer.appendChild(tiPanel);
+            window.__talentIntelligence = null;
+        }
+
         resultsContainer.classList.remove('hidden');
         resultsContainer.classList.add('flex');
     }
@@ -833,26 +926,83 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const { filename, state } = result;
-        const { screening_results = {}, drafted_email, final_status } = state;
+        const { screening_results = {}, drafted_email, final_status,
+                skills_matrix = {}, draft_quality_score = 0, refinement_count = 0 } = state;
 
-        const candidateName  = screening_results.candidateName  || 'Unknown Candidate';
-        const candidateEmail = screening_results.candidateEmail || 'N/A';
-        const matchScore     = typeof screening_results.matchScore === 'number' ? screening_results.matchScore : 0;
-        const summary        = screening_results.summary || 'No summary available.';
-        const skillsMatched  = Array.isArray(screening_results.skillsMatched) ? screening_results.skillsMatched : [];
-        const skillsMissing  = Array.isArray(screening_results.skillsMissing) ? screening_results.skillsMissing : [];
-        const isGood         = matchScore >= 70;
-        const emailBody      = drafted_email?.body || '';
-        const emailSubject   = drafted_email?.subject || '';
+        const candidateName   = screening_results.candidateName  || 'Unknown Candidate';
+        const candidateEmail  = screening_results.candidateEmail || 'N/A';
+        const matchScore      = typeof screening_results.matchScore === 'number' ? screening_results.matchScore : 0;
+        const summary         = screening_results.summary || 'No summary available.';
+        const skillsMatched   = Array.isArray(screening_results.skillsMatched) ? screening_results.skillsMatched : [];
+        const skillsMissing   = Array.isArray(screening_results.skillsMissing) ? screening_results.skillsMissing : [];
+        const seniorityLevel  = screening_results.seniorityLevel || '';
+        const isGood          = matchScore >= 70;
+        const emailBody       = drafted_email?.body || '';
+        const emailSubject    = drafted_email?.subject || '';
 
-        const nextStep       = result.next_step || [];
-        const threadId       = result.thread_id;
-        const isInterrupted  = nextStep.includes('email_sender');
-        const nodeLog        = result._nodeLog || [];
+        const nextStep        = result.next_step || [];
+        const autoSent        = result.auto_sent === true;
+        const threadId        = result.thread_id;
+        const isInterrupted   = !autoSent && nextStep.includes('email_sender');
+        const nodeLog         = result._nodeLog || [];
+
+        // Skills intelligence lookup for confidence badges
+        const skillsAnalysis  = skills_matrix?.skills_analysis || {};
+
+        // Seniority badge HTML
+        const seniorityColors = {
+            'junior': '#0ea5e9', 'mid': '#8b5cf6', 'senior': '#059669',
+            'lead': '#f59e0b', 'unknown': '#94a3b8'
+        };
+        const sc = seniorityColors[seniorityLevel] || '';
+        const seniorityBadge = (seniorityLevel && seniorityLevel !== 'unknown')
+            ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;text-transform:capitalize;letter-spacing:0.04em;background:${sc}1a;color:${sc};border:1px solid ${sc}44;">${seniorityLevel}</span>`
+            : '';
+
+        // Bias warning badge
+        const biasScore = state.bias_score || 0;
+        const biasFlags = state.bias_flags || [];
+        const biasBadge = biasScore >= 3
+            ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;background:${biasScore >= 6 ? '#fee2e2' : '#fef3c7'};color:${biasScore >= 6 ? '#dc2626' : '#92400e'};border:1px solid ${biasScore >= 6 ? '#fca5a5' : '#fde68a'};" title="${biasFlags.slice(0,2).join(' | ')}">⚑ Bias ${biasScore}/10</span>`
+            : '';
+
+        // Interview questions
+        const interviewQuestions = state.interview_questions || [];
+
+        // Career trajectory
+        const careerAnalysis  = state.career_analysis || {};
+        const careerScore     = careerAnalysis.career_health_score || 0;
+        const hopRisk         = careerAnalysis.job_hopping_risk || '';
+        const trajectory      = careerAnalysis.promotion_trajectory || '';
+        const careerGaps      = careerAnalysis.employment_gaps || [];
+        const careerBadgeColor = careerScore >= 70 ? '#059669' : careerScore >= 50 ? '#d97706' : (careerScore > 0 ? '#dc2626' : '');
+        const careerBadge = (careerScore > 0)
+            ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;background:${careerBadgeColor}1a;color:${careerBadgeColor};border:1px solid ${careerBadgeColor}44;" title="Career health: ${careerScore}/100 · ${trajectory} trajectory · ${hopRisk} hop risk">Career ${careerScore}</span>`
+            : '';
+
+        // GitHub analysis
+        const githubAnalysis  = state.github_analysis || {};
+        const githubFound     = githubAnalysis.found === true;
+        const githubScore     = githubAnalysis.github_score || 0;
+        const githubBadge = githubFound
+            ? `<a href="${githubAnalysis.github_url || '#'}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;text-decoration:none;" title="GitHub: @${githubAnalysis.username} | Score: ${githubScore}/100"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg> @${githubAnalysis.username}</a>`
+            : '';
+
+        // Multi-model consensus
+        const scoreVariance   = state.score_variance || 0;
+        const consensusFlag   = scoreVariance > 15;
+        const model1Score     = (state.screening_results || {}).model1Score;
+        const model2Score     = (state.screening_results || {}).model2Score;
+        const consensusBadge  = (consensusFlag && model1Score != null)
+            ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;background:#fef3c7;color:#92400e;border:1px solid #fde68a;" title="Models disagreed: ${model1Score}% vs ${model2Score}% (Δ${scoreVariance})">⚡ Δ${scoreVariance}</span>`
+            : '';
 
         // Status message & badge type
         let statusMsg = '', badgeClass = '';
-        if (final_status && final_status.startsWith('Success')) {
+        if (autoSent) {
+            statusMsg = 'Auto-sent by Agentic Mode';
+            badgeClass = 'badge-sent';
+        } else if (final_status && final_status.startsWith('Success')) {
             statusMsg = final_status;
             badgeClass = 'badge-sent';
         } else if (isInterrupted) {
@@ -892,8 +1042,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Build skills breakdown HTML
         let skillsHtml = '';
         if (skillsMatched.length > 0 || skillsMissing.length > 0) {
-            const matchedTags = skillsMatched.map(s =>
-                `<span class="skill-tag skill-tag-matched">${s}</span>`).join(' ');
+            const matchedTags = skillsMatched.map(s => {
+                const sd   = skillsAnalysis[s] || {};
+                const conf = sd.confidence != null ? Math.round(sd.confidence * 100) : null;
+                const lvl  = sd.level && sd.level !== 'unknown' ? sd.level : null;
+                const tip  = [lvl, conf != null ? `${conf}%` : null].filter(Boolean).join(' · ');
+                const badge = conf != null
+                    ? `<span style="opacity:0.7;font-size:9px;font-weight:600;"> ${conf}%</span>` : '';
+                return `<span class="skill-tag skill-tag-matched" title="${tip || s}">${s}${badge}</span>`;
+            }).join(' ');
             const missingTags = skillsMissing.map(s =>
                 `<span class="skill-tag skill-tag-missing">${s}</span>`).join(' ');
 
@@ -928,7 +1085,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <!-- Name & Email -->
                 <div class="flex-1 min-w-0">
-                    <h3 style="font-size:16px;font-weight:700;color:#0f172a;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${candidateName}</h3>
+                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                        <h3 style="font-size:16px;font-weight:700;color:#0f172a;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${candidateName}</h3>
+                        ${seniorityBadge}
+                        ${careerBadge}
+                        ${biasBadge}
+                        ${consensusBadge}
+                        ${githubBadge}
+                    </div>
                     <p style="font-size:12px;color:#64748b;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${candidateEmail}</p>
                     <p style="font-size:11px;color:#94a3b8;margin-top:1px;">📄 ${filename}</p>
                 </div>
@@ -982,11 +1146,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 <!-- Status & Email -->
                 <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-                    <div style="display:flex;align-items:center;gap-6px;">
+                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
                         <span class="badge ${badgeClass}" id="badge-${cardId}">
                             <span class="badge-dot"></span>
                             ${statusMsg}
                         </span>
+                        ${draft_quality_score > 0 ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600;background:${draft_quality_score >= 8 ? '#d1fae522' : '#fef3c722'};color:${draft_quality_score >= 8 ? '#059669' : '#92400e'};border:1px solid ${draft_quality_score >= 8 ? '#6ee7b7' : '#fde68a'};" title="AI email quality score (auto-refined ${refinement_count}x)">
+                            ${draft_quality_score >= 8 ? '✓' : '⟳'} Quality ${draft_quality_score}/10${refinement_count > 0 ? ` · ${refinement_count} pass${refinement_count > 1 ? 'es' : ''}` : ''}
+                        </span>` : ''}
                     </div>
                     ${emailBody ? `<button type="button" class="email-toggle-btn" onclick="toggleEmail('${cardId}')">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/></svg>
@@ -1029,6 +1196,94 @@ document.addEventListener('DOMContentLoaded', () => {
                             </button>
                         </div>
                     </div>` : ''}
+                </div>` : ''}
+
+                ${careerScore > 0 ? `
+                <div>
+                    <button type="button" class="score-reason-toggle" style="color:${careerBadgeColor};" onclick="
+                        const b = document.getElementById('career-${cardId}');
+                        b.classList.toggle('hidden');
+                        this.textContent = b.classList.contains('hidden') ? '▾ Career Analysis' : '▴ Hide Career Analysis';
+                    ">▾ Career Analysis</button>
+                    <div id="career-${cardId}" class="hidden" style="margin-top:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;">
+                        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px;">
+                            ${careerScore > 0 ? `<div><div style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.05em;">Health</div><div style="font-size:18px;font-weight:800;color:${careerBadgeColor};">${careerScore}<span style="font-size:11px;color:#94a3b8;">/100</span></div></div>` : ''}
+                            ${careerAnalysis.total_experience_years ? `<div><div style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.05em;">Experience</div><div style="font-size:14px;font-weight:700;color:#1e293b;">${careerAnalysis.total_experience_years}y</div></div>` : ''}
+                            ${careerAnalysis.avg_tenure_months ? `<div><div style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.05em;">Avg Tenure</div><div style="font-size:14px;font-weight:700;color:#1e293b;">${careerAnalysis.avg_tenure_months}mo</div></div>` : ''}
+                            ${trajectory && trajectory !== 'unknown' ? `<div><div style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.05em;">Trajectory</div><div style="font-size:13px;font-weight:700;color:#4338ca;text-transform:capitalize;">${trajectory}</div></div>` : ''}
+                            ${hopRisk && hopRisk !== 'unknown' ? `<div><div style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.05em;">Hop Risk</div><div style="font-size:13px;font-weight:700;color:${hopRisk==='high'?'#dc2626':hopRisk==='moderate'?'#d97706':'#059669'};text-transform:capitalize;">${hopRisk}</div></div>` : ''}
+                        </div>
+                        ${careerAnalysis.career_summary ? `<p style="font-size:12px;color:#475569;line-height:1.6;border-top:1px solid #e2e8f0;padding-top:8px;">${careerAnalysis.career_summary}</p>` : ''}
+                        ${careerGaps.length > 0 ? `<div style="margin-top:8px;"><div style="font-size:10px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Gaps</div>${careerGaps.map(g=>`<span style="font-size:11px;background:#fffbeb;color:#92400e;border:1px solid #fde68a;border-radius:4px;padding:2px 7px;margin-right:4px;">${g.start||''} → ${g.end||''} (${g.duration_months||'?'}mo, ${g.severity||''})</span>`).join('')}</div>` : ''}
+                        ${(careerAnalysis.green_flags||[]).length > 0 ? `<div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap;">${(careerAnalysis.green_flags||[]).map(f=>`<span style="font-size:11px;background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;border-radius:4px;padding:1px 6px;">✓ ${f}</span>`).join('')}</div>` : ''}
+                        ${(careerAnalysis.red_flags||[]).length > 0 ? `<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">${(careerAnalysis.red_flags||[]).map(f=>`<span style="font-size:11px;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:4px;padding:1px 6px;">⚑ ${f}</span>`).join('')}</div>` : ''}
+                    </div>
+                </div>` : ''}
+
+                ${githubFound ? `
+                <div>
+                    <button type="button" class="score-reason-toggle" style="color:#475569;" onclick="
+                        const b = document.getElementById('gh-${cardId}');
+                        b.classList.toggle('hidden');
+                        this.textContent = b.classList.contains('hidden') ? '▾ GitHub Profile' : '▴ Hide GitHub';
+                    ">▾ GitHub Profile</button>
+                    <div id="gh-${cardId}" class="hidden" style="margin-top:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;">
+                        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+                            <a href="${githubAnalysis.github_url||'#'}" target="_blank" rel="noopener" style="font-size:13px;font-weight:700;color:#0f172a;text-decoration:none;">@${githubAnalysis.username}</a>
+                            <span style="font-size:12px;font-weight:700;color:${githubScore>=70?'#059669':githubScore>=40?'#d97706':'#dc2626'};">Score ${githubScore}/100</span>
+                        </div>
+                        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px;">
+                            ${githubAnalysis.public_repos != null ? `<div><div style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;">Repos</div><div style="font-size:14px;font-weight:700;color:#1e293b;">${githubAnalysis.public_repos}</div></div>` : ''}
+                            ${githubAnalysis.total_stars != null ? `<div><div style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;">Stars</div><div style="font-size:14px;font-weight:700;color:#1e293b;">⭐ ${githubAnalysis.total_stars}</div></div>` : ''}
+                            ${githubAnalysis.followers != null ? `<div><div style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;">Followers</div><div style="font-size:14px;font-weight:700;color:#1e293b;">${githubAnalysis.followers}</div></div>` : ''}
+                        </div>
+                        ${(githubAnalysis.languages||[]).length > 0 ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;">${(githubAnalysis.languages||[]).map(l=>`<span style="font-size:11px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;border-radius:4px;padding:1px 6px;">${l}</span>`).join('')}</div>` : ''}
+                        ${(githubAnalysis.top_repos||[]).length > 0 ? `<div style="margin-top:4px;">${(githubAnalysis.top_repos||[]).slice(0,3).map(r=>`<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #f1f5f9;"><a href="${r.url||'#'}" target="_blank" rel="noopener" style="font-size:11px;font-weight:600;color:#4338ca;text-decoration:none;">${r.name}</a>${r.stars?`<span style="font-size:10px;color:#94a3b8;">⭐ ${r.stars}</span>`:''}${r.language?`<span style="font-size:10px;color:#94a3b8;">${r.language}</span>`:''}</div>`).join('')}</div>` : ''}
+                    </div>
+                </div>` : ''}
+
+                ${interviewQuestions.length > 0 ? `
+                <div>
+                    <button type="button" class="score-reason-toggle" style="color:#4338ca;" onclick="
+                        const b = document.getElementById('iq-${cardId}');
+                        b.classList.toggle('hidden');
+                        this.textContent = b.classList.contains('hidden') ? '▾ Interview Questions (${interviewQuestions.length})' : '▴ Hide Questions';
+                    ">▾ Interview Questions (${interviewQuestions.length})</button>
+                    <div id="iq-${cardId}" class="hidden" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+                        ${(['technical','behavioral','skills-gap','culture'].map(type => {
+                            const qs = interviewQuestions.filter(q => q.type === type);
+                            if (!qs.length) return '';
+                            const typeLabels = {'technical':'Technical','behavioral':'Behavioral','skills-gap':'Skills Gap','culture':'Culture Fit'};
+                            const typeColors = {'technical':'#4338ca','behavioral':'#059669','skills-gap':'#d97706','culture':'#7c3aed'};
+                            const qHtml = qs.map((q, qi) => {
+                                const rationale = q.rationale
+                                    ? '<div style="font-size:10px;color:#94a3b8;margin-top:3px;font-style:italic;">' + q.rationale + (q.difficulty ? ' · ' + q.difficulty : '') + '</div>'
+                                    : '';
+                                return '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:3px solid ' + typeColors[type] + ';border-radius:6px;padding:9px 11px;margin-bottom:4px;">'
+                                    + '<div style="font-size:12px;color:#1e293b;font-weight:500;">' + (qi+1) + '. ' + q.question + '</div>'
+                                    + rationale
+                                    + '</div>';
+                            }).join('');
+                            return '<div style="margin-bottom:4px;">'
+                                + '<div style="font-size:10px;font-weight:700;color:' + typeColors[type] + ';text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">' + typeLabels[type] + '</div>'
+                                + qHtml
+                                + '</div>';
+                        }).join(''))}
+                    </div>
+                </div>` : ''}
+
+                ${biasFlags.length > 0 ? `
+                <div>
+                    <button type="button" class="score-reason-toggle" style="color:${biasScore >= 6 ? '#dc2626' : '#92400e'};" onclick="
+                        const b = document.getElementById('bias-${cardId}');
+                        b.classList.toggle('hidden');
+                        this.textContent = b.classList.contains('hidden') ? '▾ Bias Audit Flags (${biasFlags.length})' : '▴ Hide Bias Flags';
+                    ">▾ Bias Audit Flags (${biasFlags.length})</button>
+                    <div id="bias-${cardId}" class="hidden" style="margin-top:8px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;">
+                        <div style="font-size:10px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">⚑ DEI Audit — Bias Score ${biasScore}/10</div>
+                        ${biasFlags.map(f => `<div style="font-size:11px;color:#78350f;padding:3px 0;border-bottom:1px solid #fde68a66;">• ${f}</div>`).join('')}
+                        <div style="font-size:10px;color:#92400e;margin-top:6px;font-style:italic;">Review recommended before final decision.</div>
+                    </div>
                 </div>` : ''}
 
                 ${nodeLog.length > 0 ? `
@@ -1312,6 +1567,114 @@ document.addEventListener('DOMContentLoaded', () => {
                     </tbody>
                 </table>
             </div>`;
+        return wrap;
+    }
+
+    /* ── AI Ranking Report ───────────────────────────────── */
+    function buildRankingReport(ranking) {
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'width:100%;';
+
+        const priorityColors = {'immediate': '#059669', 'standard': '#4338ca', 'backup': '#92400e'};
+        const confColors     = {'high': '#059669', 'medium': '#d97706', 'low': '#dc2626'};
+        const confidence     = ranking.hire_confidence || 'medium';
+        const ranked         = ranking.ranked_candidates || [];
+
+        wrap.innerHTML = `
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+            <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:32px;height:32px;background:rgba(255,255,255,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;">🏆</div>
+                    <div>
+                        <div style="font-size:14px;font-weight:700;color:#fff;">AI Comparative Ranking</div>
+                        <div style="font-size:11px;color:rgba(255,255,255,0.75);">${ranked.length} shortlisted candidates ranked</div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    ${ranking.top_pick ? `<span style="background:rgba(255,255,255,0.15);color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;">Top Pick: ${ranking.top_pick}</span>` : ''}
+                    <span style="background:rgba(255,255,255,0.15);color:${confColors[confidence]};border:1px solid rgba(255,255,255,0.2);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:capitalize;">${confidence} confidence</span>
+                    <button type="button" onclick="document.getElementById('ranking-report-body').classList.toggle('hidden');this.textContent=document.getElementById('ranking-report-body').classList.contains('hidden')?'▾ Show Report':'▴ Hide Report';" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">▾ Show Report</button>
+                </div>
+            </div>
+            <div id="ranking-report-body" class="hidden">
+                <div style="padding:14px 20px;border-bottom:1px solid #f1f5f9;">
+                    <p style="font-size:13px;color:#475569;line-height:1.65;">${ranking.summary || ''}</p>
+                    ${ranking.recommendation ? `<p style="font-size:12px;font-weight:600;color:#4338ca;margin-top:6px;">Recommendation: ${ranking.recommendation}</p>` : ''}
+                </div>
+                <div style="display:flex;flex-direction:column;gap:0;">
+                    ${ranked.map((r, i) => {
+                        const medals    = ['🥇','🥈','🥉'];
+                        const medal     = medals[i] || `#${r.rank}`;
+                        const pColor    = priorityColors[r.interview_priority] || '#64748b';
+                        return `<div style="padding:12px 20px;border-bottom:1px solid #f1f5f9;display:flex;gap:12px;align-items:flex-start;">
+                            <div style="font-size:20px;flex-shrink:0;width:28px;text-align:center;">${medal}</div>
+                            <div style="flex:1;min-width:0;">
+                                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+                                    <span style="font-size:14px;font-weight:700;color:#0f172a;">${r.name}</span>
+                                    <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:${pColor}1a;color:${pColor};border:1px solid ${pColor}33;text-transform:capitalize;">${(r.interview_priority||'standard').replace('-',' ')}</span>
+                                </div>
+                                <p style="font-size:12px;color:#475569;line-height:1.55;margin-bottom:6px;">${r.rationale || ''}</p>
+                                <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                                    ${(r.strengths||[]).length > 0 ? `<div><div style="font-size:10px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Strengths</div><div style="display:flex;gap:4px;flex-wrap:wrap;">${(r.strengths||[]).map(s=>`<span style="font-size:11px;background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;border-radius:4px;padding:1px 6px;">${s}</span>`).join('')}</div></div>` : ''}
+                                    ${(r.concerns||[]).length > 0 ? `<div><div style="font-size:10px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Watch</div><div style="display:flex;gap:4px;flex-wrap:wrap;">${(r.concerns||[]).map(s=>`<span style="font-size:11px;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:4px;padding:1px 6px;">${s}</span>`).join('')}</div></div>` : ''}
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>
+        </div>`;
+        return wrap;
+    }
+
+    function buildTalentIntelligencePanel(ti, totalCount) {
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'width:100%;';
+        const diffColors  = {'low': '#059669', 'medium': '#d97706', 'high': '#dc2626'};
+        const qualColors  = {'high': '#059669', 'medium': '#4338ca', 'low': '#dc2626'};
+        const difficulty  = (ti.hiring_difficulty || 'medium').toLowerCase();
+        const quality     = (ti.pool_quality || 'medium').toLowerCase();
+
+        wrap.innerHTML = `
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+            <div style="background:linear-gradient(135deg,#0f766e,#059669);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="width:32px;height:32px;background:rgba(255,255,255,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;">🧠</div>
+                    <div>
+                        <div style="font-size:14px;font-weight:700;color:#fff;">Competitive Talent Intelligence</div>
+                        <div style="font-size:11px;color:rgba(255,255,255,0.75);">${totalCount} candidates analysed · Pool avg ${ti.pool_avg_score || 0}%</div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <span style="background:rgba(255,255,255,0.15);color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:capitalize;border:1px solid rgba(255,255,255,0.25);">Pool: ${quality}</span>
+                    <span style="background:${diffColors[difficulty]}22;color:${diffColors[difficulty]};border:1px solid ${diffColors[difficulty]}44;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:capitalize;">Hiring: ${difficulty} difficulty</span>
+                    <button type="button" onclick="document.getElementById('ti-body').classList.toggle('hidden');this.textContent=document.getElementById('ti-body').classList.contains('hidden')?'▾ Show Intelligence':'▴ Hide Intelligence';" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">▾ Show Intelligence</button>
+                </div>
+            </div>
+            <div id="ti-body" class="hidden">
+                <div style="padding:14px 20px;border-bottom:1px solid #f1f5f9;">
+                    <p style="font-size:13px;color:#475569;line-height:1.65;">${ti.market_insight || ti.summary || ''}</p>
+                    ${ti.time_to_fill_estimate ? `<div style="margin-top:8px;display:inline-block;background:#f0fdf4;color:#059669;border:1px solid #bbf7d0;border-radius:6px;font-size:11px;font-weight:600;padding:3px 10px;">Est. time to fill: ${ti.time_to_fill_estimate}</div>` : ''}
+                </div>
+                <div style="padding:14px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;border-bottom:1px solid #f1f5f9;">
+                    <div style="background:#f8fafc;border-radius:8px;padding:12px;">
+                        <div style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Skill Gaps</div>
+                        ${(ti.skill_gap_analysis?.critical_gaps||[]).slice(0,5).map(g=>`<div style="font-size:11px;color:#dc2626;padding:2px 0;">⚠ ${g}</div>`).join('')}
+                        ${(ti.skill_gap_analysis?.nice_to_have_gaps||[]).slice(0,3).map(g=>`<div style="font-size:11px;color:#d97706;padding:2px 0;">○ ${g}</div>`).join('')}
+                        ${!(ti.skill_gap_analysis?.critical_gaps||[]).length ? `<div style="font-size:11px;color:#94a3b8;">No critical gaps detected</div>` : ''}
+                    </div>
+                    <div style="background:#f8fafc;border-radius:8px;padding:12px;">
+                        <div style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Top Skills in Pool</div>
+                        ${Object.entries(ti.top_skills_in_pool||{}).slice(0,8).map(([skill,count])=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:#475569;padding:2px 0;"><span>${skill}</span><span style="font-weight:700;color:#4338ca;">${count}</span></div>`).join('')}
+                    </div>
+                    <div style="background:#f8fafc;border-radius:8px;padding:12px;">
+                        <div style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Recommendations</div>
+                        ${(ti.recommendations||[]).slice(0,4).map(r=>`<div style="font-size:11px;color:#1e293b;padding:3px 0;line-height:1.5;">→ ${r}</div>`).join('')}
+                    </div>
+                </div>
+                ${(ti.pool_strengths||[]).length > 0 ? `<div style="padding:12px 20px;border-bottom:1px solid #f1f5f9;display:flex;flex-wrap:wrap;gap:6px;"><span style="font-size:10px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:.05em;margin-right:4px;align-self:center;">Pool Strengths</span>${(ti.pool_strengths||[]).map(s=>`<span style="font-size:11px;background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;border-radius:4px;padding:2px 8px;">${s}</span>`).join('')}</div>` : ''}
+            </div>
+        </div>`;
         return wrap;
     }
 

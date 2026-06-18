@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from jose import JWTError, jwt
 
 ALGORITHM          = 'HS256'
-TOKEN_EXPIRE_HOURS = 24
+TOKEN_EXPIRE_HOURS = 1
 COOKIE_NAME        = 'access_token'
 
 

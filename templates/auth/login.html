@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — AI Recruitment{% endblock %}
+
+{% block extra_styles %}
+body { display: flex; }
+
+/* ── Left brand panel ─────────────────────────────────────── */
+.brand {
+    width: 420px; flex-shrink: 0;
+    background: linear-gradient(155deg, #3730a3 0%, #4f46e5 45%, #7c3aed 100%);
+    display: flex; flex-direction: column; padding: 52px 48px;
+    position: relative; overflow: hidden;
+}
+.brand::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.06) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 80%, rgba(255,255,255,0.04) 0%, transparent 50%);
+}
+.brand-orb { position: absolute; border-radius: 50%; pointer-events: none; background: rgba(255,255,255,0.06); }
+.brand-orb-1 { width: 260px; height: 260px; top: -80px; right: -80px; }
+.brand-orb-2 { width: 160px; height: 160px; bottom: 80px; left: -40px; }
+.brand-logo { display: flex; align-items: center; gap: 11px; margin-bottom: 52px; position: relative; }
+.brand-logo-icon {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.25);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.brand-logo-name { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 17px; font-weight: 800; color: white; }
+.brand-headline {
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 34px; font-weight: 800;
+    color: white; line-height: 1.18; letter-spacing: -0.5px; margin-bottom: 18px; position: relative;
+}
+.brand-sub { font-size: 14.5px; color: rgba(255,255,255,0.68); line-height: 1.65; margin-bottom: 52px; position: relative; }
+.features { display: flex; flex-direction: column; gap: 16px; position: relative; }
+.feature { display: flex; align-items: center; gap: 13px; }
+.feature-ico {
+    width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+    background: rgba(255,255,255,0.13); border: 1px solid rgba(255,255,255,0.18);
+    display: flex; align-items: center; justify-content: center;
+}
+.feature-text { font-size: 13.5px; color: rgba(255,255,255,0.82); font-weight: 500; line-height: 1.4; }
+.brand-footer { margin-top: auto; padding-top: 48px; position: relative; font-size: 11.5px; color: rgba(255,255,255,0.38); }
+
+/* ── Right form panel ─────────────────────────────────────── */
+.form-side {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 40px 24px; background: #f0f2f7;
+}
+.form-wrap { width: 100%; max-width: 390px; }
+.form-title {
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 28px; font-weight: 800;
+    color: #0f172a; letter-spacing: -0.4px; margin-bottom: 6px;
+}
+.form-sub { font-size: 14px; color: #64748b; margin-bottom: 36px; }
+.form-link { color: #4f46e5; text-decoration: none; font-weight: 600; }
+.form-link:hover { text-decoration: underline; }
+
+.field { margin-bottom: 18px; }
+.field label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 7px; }
+.input-row { position: relative; }
+.input-row .ico {
+    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+    color: #94a3b8; display: flex; align-items: center; pointer-events: none;
+}
+input[type=text], input[type=email], input[type=password] {
+    width: 100%; padding: 11px 14px 11px 40px;
+    border: 1.5px solid #e2e8f0; border-radius: 10px;
+    font-size: 14px; font-family: 'Inter', sans-serif;
+    color: #0f172a; background: #ffffff; outline: none;
+    transition: border-color .2s, box-shadow .2s;
+}
+input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+input::placeholder { color: #c4c9d4; }
+.toggle-pwd {
+    position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; color: #94a3b8;
+    display: flex; align-items: center; padding: 2px; transition: color .2s;
+}
+.toggle-pwd:hover { color: #4f46e5; }
+
+.btn-primary {
+    width: 100%; padding: 13px; border: none; border-radius: 10px; cursor: pointer;
+    font-size: 15px; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif;
+    color: white; letter-spacing: 0.01em; margin-top: 6px;
+    background: linear-gradient(135deg, #4338ca 0%, #6366f1 55%, #7c3aed 100%);
+    box-shadow: 0 4px 18px rgba(99,102,241,0.35);
+    transition: all .2s; position: relative; overflow: hidden;
+}
+.btn-primary::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, #6366f1, #818cf8); opacity: 0; transition: opacity .2s;
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(99,102,241,0.45); }
+.btn-primary:hover::after { opacity: 1; }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary span { position: relative; z-index: 1; }
+
+.divider { text-align: center; margin: 22px 0 16px; font-size: 13px; color: #94a3b8; }
+
+@media (max-width: 768px) {
+    .brand { display: none; }
+    .form-side { background: #fff; }
+}
+{% endblock %}
+
+{% block content %}
+<div class="brand">
+    <div class="brand-orb brand-orb-1"></div>
+    <div class="brand-orb brand-orb-2"></div>
+    <div class="brand-logo">
+        <div class="brand-logo-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+        </div>
+        <span class="brand-logo-name">AI Recruitment</span>
+    </div>
+    <h1 class="brand-headline">Hire smarter,<br>not harder.</h1>
+    <p class="brand-sub">Multi-agent AI that screens resumes, drafts personalised emails, and surfaces your best candidates — automatically.</p>
+    <div class="features">
+        <div class="feature">
+            <div class="feature-ico">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+            </div>
+            <span class="feature-text">AI scores every resume 0–100 against the JD</span>
+        </div>
+        <div class="feature">
+            <div class="feature-ico">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2">
+                    <path d="m22 2-7 20-4-9-9-4 20-7z"/><path d="M22 2 11 13"/>
+                </svg>
+            </div>
+            <span class="feature-text">Personalised invitation &amp; rejection emails drafted instantly</span>
+        </div>
+        <div class="feature">
+            <div class="feature-ico">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+                </svg>
+            </div>
+            <span class="feature-text">Live pipeline dashboard across all open roles</span>
+        </div>
+        <div class="feature">
+            <div class="feature-ico">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2">
+                    <path d="M18 20V10M12 20V4M6 20v-6"/>
+                </svg>
+            </div>
+            <span class="feature-text">Analytics, audit trail &amp; candidate history</span>
+        </div>
+    </div>
+    <div class="brand-footer">© 2026 AI Recruitment Assistant · Powered by LangGraph</div>
+</div>
+
+<div class="form-side">
+    <div class="form-wrap">
+        <h2 class="form-title">Welcome back</h2>
+        <p class="form-sub">Sign in to your hiring dashboard.</p>
+
+        <form method="POST" action="{{ url_for('auth.login') }}" autocomplete="on" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <div class="field">
+                <label for="email">Email address</label>
+                <div class="input-row">
+                    <span class="ico">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                            <polyline points="22,6 12,13 2,6"/>
+                        </svg>
+                    </span>
+                    <input id="email" name="email" type="email" autocomplete="email"
+                           placeholder="you@example.com"
+                           value="{{ request.form.get('email', '') }}"
+                           required autofocus>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="password">Password</label>
+                <div class="input-row">
+                    <span class="ico">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                    </span>
+                    <input id="password" name="password" type="password"
+                           autocomplete="current-password" placeholder="Password" required>
+                    <button type="button" class="toggle-pwd" onclick="togglePwd('password','eye-open','eye-shut')" tabindex="-1">
+                        <svg id="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <svg id="eye-shut" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                            <line x1="1" y1="1" x2="23" y2="23"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary">
+                <span>Sign In →</span>
+            </button>
+        </form>
+
+        <p class="divider">
+            Don't have an account?
+            <a href="{{ url_for('auth.register_page') }}" class="form-link">Create one</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function togglePwd(inputId, openId, shutId) {
+    const inp  = document.getElementById(inputId);
+    const open = document.getElementById(openId);
+    const shut = document.getElementById(shutId);
+    const show = inp.type === 'password';
+    inp.type            = show ? 'text'  : 'password';
+    open.style.display  = show ? 'none'  : '';
+    shut.style.display  = show ? ''      : 'none';
+}
+</script>
+{% endblock %}
